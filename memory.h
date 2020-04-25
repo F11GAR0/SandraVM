@@ -5,7 +5,9 @@
 class Memory
 {
 public:
-    Memory();
+    Memory(){
+
+    }
     ~Memory(){
         for(auto iter : m_lHeap){
             free(iter.data);
@@ -29,7 +31,12 @@ public:
         remove_heap(ent);
     }
     DWORD GetRealAddr(DWORD a_VirtualAddr){
-        return (DWORD)find_heap(a_VirtualAddr)->data;
+        auto ent = find_heap(a_VirtualAddr);
+        if(ent){
+            return (DWORD)ent->data;
+        } else {
+            return 0;
+        }
     }
     int MemCmp(DWORD dest_virtual, DWORD src_virtual){
         heap_entity *dest_ent = find_heap(dest_virtual);
@@ -84,7 +91,10 @@ private:
                 last_len = iter->virtual_addr - prev_addr;
                 //ret_addr = iter->virtual_addr + iter->len;
                 if(last_len >= len){
-                    return iter->virtual_addr + iter->len;
+
+                    heap_entity *prev_ent = find_heap(prev_addr);
+                    if(last_len - prev_ent->len >= len)
+                        return prev_ent->virtual_addr + prev_ent->len;
                 }
                 prev_addr = iter->virtual_addr;
             }

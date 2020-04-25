@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
     var<int*> c;
     c = (int*)&b;
     var<int> summ = sum(a, b);
-    std::cout<<*c<<"+"<<a<<"="<<summ;
+    std::cout<<summ;
 
     std::cin.get();
     return app.exec();
