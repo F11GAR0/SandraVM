@@ -1,3 +1,3 @@
 # SandraVM
- virtual machine.
+Virtual machine.
 Not completed now.
