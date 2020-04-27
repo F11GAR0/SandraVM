@@ -18,4 +18,6 @@ SOURCES += main.cpp
 
 HEADERS += \
     memory.h \
-    main.h
+    main.h \
+    stack.h \
+    opc_processor.h

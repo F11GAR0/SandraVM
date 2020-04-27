@@ -128,16 +128,24 @@ private:
 
 static Memory g_Memory;
 
+
+
 template <typename T>
 class var{
 private:
     DWORD virtual_addr;
 public:
-    T getValue(){
+    typedef T & deref;
+    T& getValue(){
         return *(T*)g_Memory.GetRealAddr(virtual_addr);
     }
     T* operator &(){
         return (T*)g_Memory.GetRealAddr(virtual_addr);
+    }
+    deref& operator *() const {
+        const deref drf = *(T*)g_Memory.GetRealAddr(virtual_addr);
+        auto a = *drf;
+        return *drf;
     }
     bool operator ==(const var& right){
         return g_Memory.MemCmp(right.virtual_addr, virtual_addr);

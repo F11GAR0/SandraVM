@@ -4,6 +4,8 @@
 #include <iostream>
 #include <vector>
 #include <list>
+//TODO: change it to custom map container
+#include <map>
 
 #ifndef WIN32
 typedef size_t DWORD;
@@ -15,6 +17,8 @@ typedef void*   PVOID;
 #endif
 
 #include "memory.h"
+#include "stack.h"
+#include "opc_processor.h"
 
 
 
