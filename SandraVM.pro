@@ -20,4 +20,5 @@ HEADERS += \
     memory.h \
     main.h \
     stack.h \
-    opc_processor.h
+    opc_processor.h \
+    interpretator.h

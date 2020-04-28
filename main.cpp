@@ -4,19 +4,7 @@
 #define DEBUG
 
 namespace BuildSanOne{
-enum eOpcTable{
-    MOV_REG_DWORD = 0x71,
-    MOV_REG_PDWORD,
-    MOV_DWORD_REG,
-    MOV_REG_REG,
-    PUSH,
-    POP,
-    JMP,
-    CALL,
-    ADD_REG_REG,
-    ADD_REG_DWORD,
-    CMP
-};
+
 void mov_reg_dword(PVOID argvs){
     //so first, we need to know what register we need
     int p = 0;
