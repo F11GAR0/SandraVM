@@ -107,13 +107,8 @@ public:
         for(int i = 0; i < len; i++){
             BYTE opc = ((BYTE*)code_section)[i];
             if(m_mCallbackTable.find(opc) != m_mCallbackTable.end()){
-                int argvbytes = m_mCallbackTable[opc].argv_count;
-                void *data = malloc(argvbytes);
-                for(int j = 0; j < argvbytes; j++){
-                    ((BYTE*)data)[j] = ((BYTE*)code_section)[++i];
-                }
-                m_mCallbackTable[opc].cb(data);
-                free(data);
+                m_mCallbackTable[opc].cb((PVOID*)((DWORD)code_section + ++i));
+                i += m_mCallbackTable[opc].argv_count - 1;
             }
         }
     }

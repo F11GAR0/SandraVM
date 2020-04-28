@@ -13,7 +13,8 @@ enum eOpcTable{
     POP,
     JMP,
     CALL,
-    ADD,
+    ADD_REG_REG,
+    ADD_REG_DWORD,
     CMP
 };
 void mov_reg_dword(PVOID argvs){
@@ -51,6 +52,30 @@ void pop(PVOID argvs){
 #endif
 }
 
+//math operations
+
+
+void add_reg_reg(PVOID argvs){
+    BYTE dest = ((BYTE*)argvs)[0];
+    BYTE src = ((BYTE*)argvs)[1];
+    g_Registers[dest] += g_Registers[src];
+
+#ifdef DEBUG
+    std::cout<<"add_reg_reg( "<<(int)dest<<", "<<(int)src<<" );"<<std::endl;
+#endif
+}
+
+
+void add_reg_dword(PVOID argvs){
+    BYTE dest = ((BYTE*)argvs)[0];
+    DWORD val = *(DWORD*)((DWORD)argvs + 1);;
+    g_Registers[dest] += val;
+
+#ifdef DEBUG
+    std::cout<<"add_reg_dword( "<<(int)dest<<", "<<(int)val<<" );"<<std::endl;
+#endif
+}
+
 OpcodeProcessor g_Machine;
 
 void initMachine(){
@@ -58,6 +83,8 @@ void initMachine(){
     g_Machine.registerOpcode(eOpcTable::MOV_REG_REG, mov_reg_reg, 2);
     g_Machine.registerOpcode(eOpcTable::PUSH, push, 1);
     g_Machine.registerOpcode(eOpcTable::POP, pop, 1);
+    g_Machine.registerOpcode(eOpcTable::ADD_REG_REG, add_reg_reg, 2);
+    g_Machine.registerOpcode(eOpcTable::ADD_REG_DWORD, add_reg_dword, 9);
 }
 
 }
@@ -103,6 +130,21 @@ int main(int argc, char *argv[])
 
     code_sec.getValue().push_back(BuildSanOne::eOpcTable::POP);
     code_sec.getValue().push_back(eRegByte::SANBX); //
+
+    code_sec.getValue().push_back(BuildSanOne::eOpcTable::ADD_REG_DWORD);
+    code_sec.getValue().push_back(eRegByte::SANBX);
+    code_sec.getValue().push_back(0x7); //SANBX = 5
+    code_sec.getValue().push_back(0x0);
+    code_sec.getValue().push_back(0x0);
+    code_sec.getValue().push_back(0x0);
+    code_sec.getValue().push_back(0x0);
+    code_sec.getValue().push_back(0x0);
+    code_sec.getValue().push_back(0x0);
+    code_sec.getValue().push_back(0x0);
+
+    code_sec.getValue().push_back(BuildSanOne::eOpcTable::ADD_REG_REG);
+    code_sec.getValue().push_back(eRegByte::SANAX);
+    code_sec.getValue().push_back(eRegByte::SANBX);
 
     BuildSanOne::g_Machine.process((PVOID)code_sec.getValue().data(), code_sec.getValue().size());
 
