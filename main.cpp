@@ -175,3 +175,16 @@ int main(int argc, char *argv[])
     std::cin.get();
     return app.exec();
 }
+/*
+.var
+    _global a
+    _global b
+.code
+    mov sanax, a
+    mov sanbx, b
+    push sanax
+    mov sanax, sanbx
+    pop sanbx
+    out sanax
+    out sanbx
+*/

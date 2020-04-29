@@ -13,11 +13,13 @@ public:
         m_bMinorVMVer = SANDRA_MINOR_VER;
     }
     void loadCode(PBYTE code, unsigned int size){
-        m_pCodeSection = code;
+        m_pCodeSection = (PBYTE)malloc(size);
+        copyBytes(&m_pCodeSection, &code, size);
         m_dwCodeSectionSize = size;
     }
     void loadData(PBYTE data, unsigned int size){
-        m_pDataSection = data;
+        m_pDataSection = (PBYTE)malloc(size);
+        copyBytes(&m_pDataSection, &data, size);
         m_dwDataSectionSize = size;
     }
     void getCode(PBYTE *out, PDWORD out_size){
@@ -42,14 +44,20 @@ public:
             *(BYTE*)((DWORD)ret + p++) = m_pVMSignature[i];
         *(BYTE*)((DWORD)ret + p++) = m_bMajorVMVer;
         *(BYTE*)((DWORD)ret + p++) = m_bMinorVMVer;
-        *(DWORD*)((DWORD)ret + p++) = m_dwCodeSectionOffset;
-        *(DWORD*)((DWORD)ret + p++) = m_dwDataSectionOffset;
-        *(DWORD*)((DWORD)ret + p++) = m_dwCodeSectionSize;
-        *(DWORD*)((DWORD)ret + p++) = m_dwDataSectionSize;
 
-        *(DWORD*)((DWORD)ret + p++) = m_dwEntryPoint;
+        *(DWORD*)((DWORD)ret + p) = m_dwCodeSectionOffset;
+        p += sizeof(DWORD);
+        *(DWORD*)((DWORD)ret + p) = m_dwDataSectionOffset;
+        p += sizeof(DWORD);
+        *(DWORD*)((DWORD)ret + p) = m_dwCodeSectionSize;
+        p += sizeof(DWORD);
+        *(DWORD*)((DWORD)ret + p) = m_dwDataSectionSize;
+        p += sizeof(DWORD);
+        *(DWORD*)((DWORD)ret + p) = m_dwEntryPoint;
+        p += sizeof(DWORD);
 
-        for(int i = 0; i < 1000; i++){
+        //reserved
+        for(int i = 0; i < 0x1000; i++){
             *(BYTE*)((DWORD)ret + p++) = 0x00;
         }
 
@@ -68,6 +76,12 @@ public:
         }
     }
 private:
+    void copyBytes(PBYTE *dest, PBYTE *src, int len){
+        for(int i = 0; i < len; i++){
+            (*dest)[i] = (*src)[i];
+        }
+    }
+
     PBYTE m_pVMSignature; //should occup 16 bytes
 
     BYTE  m_bMinorVMVer;

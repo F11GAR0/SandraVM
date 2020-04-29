@@ -170,11 +170,12 @@ public:
         m_sLoadedCode.clear();
     }
     void loadCode(std::string code){
+        m_sLoadedCode.clear();
         VMCMessage::show("loading code.");
         m_sLoadedCode += code;
     }
 
-    void compile(VMPE *out){
+    void compile(VMPE *peout){
         if(m_sLoadedCode.size() > 0){
             auto lines = split(m_sLoadedCode, '\n');
             std::vector<stInterpretEntity> lex_set;
@@ -186,11 +187,12 @@ public:
             PBYTE out;
             DWORD out_len;
             VMCodeArea area(lex_set);
+
             area.getCode(&out, &out_len);
-            VMPE pe;
-            pe.loadCode(out, out_len);
-            area.getCode(&out, &out_len);
-            pe.loadData(out, out_len);
+            peout->loadCode(out, out_len);
+
+            area.getData(&out, &out_len);
+            peout->loadData(out, out_len);
         }
     }
 

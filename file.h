@@ -26,7 +26,7 @@ public:
         buff << message;
     }
     void Write(PBYTE byte, DWORD len){
-        for(int i = 0; i < len; i++)
+        for(DWORD i = 0; i < len; i++)
             buff << byte[i];
     }
     template <typename T>
