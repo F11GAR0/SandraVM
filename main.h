@@ -3,6 +3,10 @@
 
 #define DEBUG
 
+#define SANDRA_MINOR_VER 0
+#define SANDRA_MAJOR_VER 1
+#define SANDRA_SIGNATURE "\x10\x10\x2f\x5asandra\xfc\xf0\x03\x8d\xf5\xc0"
+
 #include <iostream>
 #include <vector>
 #include <list>
@@ -19,17 +23,11 @@ typedef BYTE*   PBYTE;
 #include <Windows.h>
 #endif
 
-namespace BuildSanOne {
-
-
-
-
-}
-
 #include "memory.h"
 #include "stack.h"
 #include "opc_processor.h"
 #include "interpretator.h"
+#include "pe.h"
 #include "vmcode_compiler.h"
 
 #endif // MAIN_H
