@@ -1,7 +1,7 @@
 #include "main.h"
 #include <QCoreApplication>
 
-#define DEBUG
+
 
 namespace BuildSanOne{
 
@@ -11,6 +11,18 @@ void mov_reg_dword(PVOID argvs){
     BYTE reg = ((BYTE*)argvs)[p++];
     //then we need to put value to register
     g_Registers[reg] = *(DWORD*)((DWORD)argvs + p);
+
+#ifdef DEBUG
+    std::cout<<"mov_reg_dword( "<<(int)reg<<", "<<g_Registers[reg]<<" );"<<std::endl;
+#endif
+}
+void mov_reg_pdword(PVOID argvs){
+    //so first, we need to know what register we need
+    int p = 0;
+    BYTE reg = ((BYTE*)argvs)[p++];
+    //then we need to put value to register
+    DWORD pointer = (DWORD)argvs + p;
+    g_Registers[reg] = *(DWORD*)g_Memory.GetRealAddr(pointer);
 
 #ifdef DEBUG
     std::cout<<"mov_reg_dword( "<<(int)reg<<", "<<g_Registers[reg]<<" );"<<std::endl;
@@ -64,15 +76,14 @@ void add_reg_dword(PVOID argvs){
 #endif
 }
 
-OpcodeProcessor g_Machine;
-
 void initMachine(){
-    g_Machine.registerOpcode(eOpcTable::MOV_REG_DWORD, mov_reg_dword, 9);
-    g_Machine.registerOpcode(eOpcTable::MOV_REG_REG, mov_reg_reg, 2);
-    g_Machine.registerOpcode(eOpcTable::PUSH, push, 1);
-    g_Machine.registerOpcode(eOpcTable::POP, pop, 1);
-    g_Machine.registerOpcode(eOpcTable::ADD_REG_REG, add_reg_reg, 2);
-    g_Machine.registerOpcode(eOpcTable::ADD_REG_DWORD, add_reg_dword, 9);
+    g_Machine.registerOpcode(eOpcTable::MOV_REG_DWORD, "mov", mov_reg_dword, 9, 2, eArgvType::TREG, eArgvType::TDWORD);
+    g_Machine.registerOpcode(eOpcTable::MOV_REG_PDWORD, "mov", mov_reg_pdword, 9, 2, eArgvType::TREG, eArgvType::TPDWORD);
+    g_Machine.registerOpcode(eOpcTable::MOV_REG_REG, "mov", mov_reg_reg, 2, 2, eArgvType::TREG, eArgvType::TREG);
+    g_Machine.registerOpcode(eOpcTable::PUSH, "push", push, 1, 1, eArgvType::TREG);
+    g_Machine.registerOpcode(eOpcTable::POP, "pop", pop, 1, 1, eArgvType::TREG);
+    g_Machine.registerOpcode(eOpcTable::ADD_REG_REG, "add", add_reg_reg, 2, 2, eArgvType::TREG, eArgvType::TREG);
+    g_Machine.registerOpcode(eOpcTable::ADD_REG_DWORD, "add", add_reg_dword, 9, 2, eArgvType::TREG, eArgvType::TDWORD);
 }
 
 }
@@ -86,8 +97,24 @@ int main(int argc, char *argv[])
     var<std::vector<BYTE>> code_sec;
 
     //lets do simple value swap
+    const char *simple_code = ".var\n _global a\n.code\n mov sanax, a\n mov sanbx, a\n mov sanax, 12\npush sanax";
 
-    code_sec.getValue().push_back(BuildSanOne::eOpcTable::MOV_REG_DWORD);
+    std::string temp_line;
+    for(int i = 0; i < strlen(simple_code); i++){
+        if(simple_code[i] != '\n') temp_line += simple_code[i];
+        else {
+#ifdef DEBUG
+            g_Interpretator.interpret_line(temp_line).print_info();
+#endif
+            temp_line.clear();
+        }
+    }
+    if(temp_line.length() > 0){
+#ifdef DEBUG
+            g_Interpretator.interpret_line(temp_line).print_info();
+#endif
+    }
+    code_sec.getValue().push_back(eOpcTable::MOV_REG_DWORD);
     code_sec.getValue().push_back(eRegByte::SANAX);
     code_sec.getValue().push_back(0x10); //SANAX = 10
     code_sec.getValue().push_back(0x0);
@@ -98,7 +125,7 @@ int main(int argc, char *argv[])
     code_sec.getValue().push_back(0x0);
     code_sec.getValue().push_back(0x0);
 
-    code_sec.getValue().push_back(BuildSanOne::eOpcTable::MOV_REG_DWORD);
+    code_sec.getValue().push_back(eOpcTable::MOV_REG_DWORD);
     code_sec.getValue().push_back(eRegByte::SANBX);
     code_sec.getValue().push_back(0x5); //SANBX = 5
     code_sec.getValue().push_back(0x0);
@@ -109,17 +136,17 @@ int main(int argc, char *argv[])
     code_sec.getValue().push_back(0x0);
     code_sec.getValue().push_back(0x0);
 
-    code_sec.getValue().push_back(BuildSanOne::eOpcTable::PUSH);
+    code_sec.getValue().push_back(eOpcTable::PUSH);
     code_sec.getValue().push_back(eRegByte::SANAX); //
 
-    code_sec.getValue().push_back(BuildSanOne::eOpcTable::MOV_REG_REG);
+    code_sec.getValue().push_back(eOpcTable::MOV_REG_REG);
     code_sec.getValue().push_back(eRegByte::SANAX);
     code_sec.getValue().push_back(eRegByte::SANBX);
 
-    code_sec.getValue().push_back(BuildSanOne::eOpcTable::POP);
+    code_sec.getValue().push_back(eOpcTable::POP);
     code_sec.getValue().push_back(eRegByte::SANBX); //
 
-    code_sec.getValue().push_back(BuildSanOne::eOpcTable::ADD_REG_DWORD);
+    code_sec.getValue().push_back(eOpcTable::ADD_REG_DWORD);
     code_sec.getValue().push_back(eRegByte::SANBX);
     code_sec.getValue().push_back(0x7); //SANBX = 5
     code_sec.getValue().push_back(0x0);
@@ -130,11 +157,11 @@ int main(int argc, char *argv[])
     code_sec.getValue().push_back(0x0);
     code_sec.getValue().push_back(0x0);
 
-    code_sec.getValue().push_back(BuildSanOne::eOpcTable::ADD_REG_REG);
+    code_sec.getValue().push_back(eOpcTable::ADD_REG_REG);
     code_sec.getValue().push_back(eRegByte::SANAX);
     code_sec.getValue().push_back(eRegByte::SANBX);
 
-    BuildSanOne::g_Machine.process((PVOID)code_sec.getValue().data(), code_sec.getValue().size());
+    g_Machine.process((PVOID)code_sec.getValue().data(), code_sec.getValue().size());
 
     std::cout << "sanax: " << g_Registers.sanax << std::endl;
     std::cout << "sanbx: " << g_Registers.sanbx << std::endl;

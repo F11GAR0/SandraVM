@@ -19,7 +19,7 @@
  */
 
 struct stInterpretEntity{
-    BuildSanOne::eOpcTable opc;
+    eOpcTable opc;
     PVOID data;
     /*
      * optional
@@ -30,26 +30,186 @@ struct stInterpretEntity{
      */
     std::string var1_name;
     std::string var2_name;
-    bool is_section : 1;
-    bool is_label : 1;
-    bool is_variable : 1;
-    bool is_just_code : 1;
+    union{
+        struct so{
+            bool is_var_section : 1;
+            bool is_code_section : 1;
+            bool is_label : 1;
+            bool is_variable : 1;
+        } _so;
+        bool is_not_just_code;
+    } info;
+    stInterpretEntity(){
+        opc = eOpcTable::NULL_RESERVED;
+        data = nullptr;
+        var1_name.clear();
+        var2_name.clear();
+        info.is_not_just_code = false;
+    }
+#ifdef DEBUG
+    void print_info(){
+        printf("opc: 0x%X Data: 0x%p Var1: %s Var2: %s\n", opc, data, var1_name.c_str(), var2_name.c_str());
+        printf("inf: is_var_sec: %d is_code_sec: %d is_label: %d is_var: %d\n", info._so.is_var_section, info._so.is_code_section, info._so.is_label, info._so.is_variable);
+    }
+#endif
 };
+
+#define INTERPRET_BUFF_RESERVE 8
 
 class Interpretator{
 public:
     Interpretator(){}
-private:
     stInterpretEntity interpret_line(std::string line){
+        stInterpretEntity ret;
+
         auto splitted = split(line, ' ');
         //first should be opcode or label or section
         std::string first = splitted[0];
         if(first[0] == '.'){
             //section
-            if(first == ".section_variables"){
-                //TODO: complete this and add checks
+            if(first == ".var"){
+                ret.info._so.is_var_section = true;
+                return ret; //no more lol
+            }
+            if(first == ".code"){
+                ret.info._so.is_code_section = true;
+                return ret; //and no more
+            }
+        } else {
+            if(first[0] == ':'){
+                //label
+                ret.var1_name = first.erase(0);
+                ret.info._so.is_label = true;
+                return ret;
+            } else {
+                //maybe its variable?
+                if(first == "_global"){
+                    ret.var1_name = splitted[1]; //variable name
+                    ret.info._so.is_variable = true;
+                    return ret;
+                } else {
+                    //ok no more variants. obviously, its opcode!!!
+                    auto opc_info = g_Machine.getOpcByFamily(first);
+
+                    auto argvs = get_vec_from_vec(splitted, 1);
+                    std::string compressed_argvs = remove_spaces(compress(argvs, ' '));
+                    argvs = split(compressed_argvs, ',');
+
+                    int arguments_count = argvs.size();
+                    //OpcInfo finded;
+                    for(int i = 0; i < opc_info.size(); i++){
+                        if(opc_info[i].factical_arguments_count == arguments_count){
+                            if(arguments_count == 1){
+                                if(opc_info[i].atype_first == type_is(argvs[0])){
+                                    ret.opc = opc_info[i].opc;
+                                    ret.info.is_not_just_code = false;
+                                    switch(type_is(argvs[0])){
+                                    case eArgvType::TREG:
+                                        ret.var1_name = argvs[0];
+                                        break;
+                                    case eArgvType::TDWORD:
+                                        ret.data = malloc(sizeof(DWORD));
+                                        *(DWORD*)ret.data = std::stoi(argvs[0]);
+                                        break;
+                                    case eArgvType::TPDWORD:
+                                        ret.data = malloc(sizeof(DWORD));
+                                        *(DWORD*)ret.data = std::stoi(erase_start_end(argvs[0]));
+                                        break;
+                                    case eArgvType::TVAR:
+                                        ret.var1_name = argvs[0];
+                                        break;
+                                    }
+                                }
+                                return ret;
+                            }
+                            if(arguments_count == 2){
+
+                                eArgvType type_first = type_is(argvs[0]) == eArgvType::TVAR ? eArgvType::TPDWORD : type_is(argvs[0]);
+                                eArgvType type_sec = type_is(argvs[1]) == eArgvType::TVAR ? eArgvType::TPDWORD : type_is(argvs[1]);
+
+                                if(opc_info[i].atype_first == type_first && opc_info[i].atype_second == type_sec){
+                                    ret.opc = opc_info[i].opc;
+                                    ret.info.is_not_just_code = false;
+                                    switch(type_is(argvs[0])){
+                                    case eArgvType::TREG:
+                                        ret.var1_name = argvs[0];
+                                        break;
+                                    case eArgvType::TDWORD:
+                                        ret.data = malloc(sizeof(DWORD) + INTERPRET_BUFF_RESERVE);
+                                        *(DWORD*)ret.data = std::stoi(argvs[0]);
+                                        break;
+                                    case eArgvType::TPDWORD:
+                                        ret.data = malloc(sizeof(DWORD) + INTERPRET_BUFF_RESERVE);
+                                        *(DWORD*)ret.data = std::stoi(erase_start_end(argvs[0]));
+                                        break;
+                                    case eArgvType::TVAR:
+                                        ret.var1_name = argvs[0];
+                                        break;
+                                    }
+                                    switch(type_is(argvs[1])){
+                                    case eArgvType::TREG:
+                                        ret.var2_name == argvs[1];
+                                        break;
+                                    case eArgvType::TDWORD:
+                                        if(!ret.data){
+                                            ret.data = malloc(sizeof(DWORD));
+                                            *(DWORD*)ret.data = std::stoi(argvs[1]);
+                                        } else {
+                                            *(DWORD*)((DWORD)ret.data + sizeof(DWORD)) = std::stoi(argvs[1]);
+                                        }
+                                        break;
+                                    case eArgvType::TPDWORD:
+                                        if(!ret.data){
+                                            ret.data = malloc(sizeof(DWORD));
+                                            *(DWORD*)ret.data = std::stoi(argvs[1]);
+                                        } else {
+                                            *(DWORD*)((DWORD)ret.data + sizeof(DWORD)) = std::stoi(erase_start_end(argvs[1]));
+                                        }
+                                        break;
+                                    case eArgvType::TVAR:
+                                        ret.var2_name = argvs[1];
+                                        break;
+                                    }
+
+                                    return ret;
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
+        return ret;
+    }
+private:
+    eArgvType type_is(std::string in){
+        if(in[0] == '[' && in[in.length() - 1] == ']') return eArgvType::TPDWORD;
+        if(is_reg_name(in)) return eArgvType::TREG;
+        for(int i = 0, len = in.length(); i < len; i++){
+            if(!std::isdigit(in[i])){
+                return eArgvType::TVAR;
+            }
+        }
+        return eArgvType::TDWORD;
+    }
+
+    std::string erase_start_end(const std::string& in){
+        std::string ret;
+        for(int i = 1, len = in.length() - 1; i < len; i++){
+            ret += in[i];
+        }
+        return ret;
+    }
+    std::string remove_spaces(const std::string& in){
+        std::string ret;
+        for(int i = 0, len = in.length(); i < len; i++){
+            if(in[i] != ' ') ret += in[i];
+        }
+        return ret;
+    }
+
+    bool is_reg_name(const std::string& in){
+        return g_Registers.is_reg_name(in);
     }
 
     std::string compress(std::vector<std::string> in, char separator){

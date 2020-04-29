@@ -33,6 +33,21 @@ public:
     DWORD& operator[](const BYTE& value){
         return get_reg_by_byte_value(value);
     }
+    bool is_reg_name(const std::string& reg_name){
+        if(reg_name == "sanax"){
+            return true;
+        }
+        if(reg_name == "sanbx"){
+            return true;
+        }
+        if(reg_name == "sancx"){
+            return true;
+        }
+        if(reg_name == "sandx"){
+            return true;
+        }
+        return false;
+    }
     stVirtualRegisters(){
         sanax = 0;
         sanbx = 0;
@@ -78,6 +93,22 @@ private:
         }
     }
 
+    std::string get_reg_name_by_byte(const BYTE& value){
+        eRegByte b = (eRegByte)value;
+        switch (b) {
+        case eRegByte::SANAX:
+            return "sanax";
+        case eRegByte::SANBX:
+            return "sanbx";
+        case eRegByte::SANCX:
+            return "sancx";
+        case eRegByte::SANDX:
+            return "sandx";
+        default:
+            return "unk";
+        }
+    }
+
     stVirtualRegisters( const stVirtualRegisters& ) = delete;
     void operator=( const stVirtualRegisters& ) = delete;
 } g_Registers;
@@ -87,8 +118,8 @@ typedef void(*opc_callback)(PVOID);
 
 struct stCallbackData{
   opc_callback cb;
-  unsigned int argv_count;
-  stCallbackData(opc_callback _cb, int _argv_count){
+  unsigned short argv_count;
+  stCallbackData(opc_callback _cb, unsigned short _argv_count){
       cb = _cb;
       argv_count = _argv_count;
   }
@@ -98,10 +129,87 @@ struct stCallbackData{
   }
 };
 
-class OpcodeProcessor{
+enum eOpcTable{
+    NULL_RESERVED = 0x0,
+    MOV_REG_DWORD = 0x71,
+    MOV_REG_PDWORD,
+    MOV_PDWORD_REG,
+    MOV_REG_REG,
+    PUSH,
+    POP,
+    JMP,
+    CALL,
+    RET,
+    ADD_REG_REG,
+    ADD_REG_DWORD,
+    CMP
+};
+
+enum eArgvType{
+    TUNK = 0,
+    TVAR,
+    TREG,
+    TDWORD,
+    TPDWORD
+};
+
+struct OpcInfo{
+    unsigned short argvs_count; //in bytes
+    std::string opcode_family; //like mov, add and etc.
+    eOpcTable opc;
+    unsigned short factical_arguments_count; //2, 1 or 0
+    eArgvType atype_first;
+    eArgvType atype_second;
+    OpcInfo(unsigned short _ac,
+            unsigned short _fac,
+            std::string _of,
+            eOpcTable _op,
+            eArgvType _atfirst = eArgvType::TUNK,
+            eArgvType _atsec = eArgvType::TUNK
+            ){
+        argvs_count = _ac;
+        opcode_family = _of;
+        opc = _op;
+        atype_second = _atsec;
+        atype_first = _atfirst;
+        factical_arguments_count = _fac;
+    }
+};
+
+class Opcodes{
 public:
-    void registerOpcode(BYTE value, opc_callback callback, int argv_count){
+    std::vector<OpcInfo> getOpcByFamily(std::string family){
+        std::vector<OpcInfo> ret;
+        if(m_mOpcodeTable.find(family) != m_mOpcodeTable.end()){
+            return m_mOpcodeTable[family];
+        }
+        return ret;
+    }
+    void registerOpcodeInfo(eOpcTable opc,
+                            std::string opcode_family,
+                            unsigned short argvs_count,
+                            unsigned short factical_argument_count,
+                            eArgvType arg_type_first = eArgvType::TUNK,
+                            eArgvType arg_type_second = eArgvType::TUNK
+                            ){
+        m_mOpcodeTable[opcode_family].push_back(OpcInfo(argvs_count, factical_argument_count, opcode_family, opc, arg_type_first, arg_type_second));
+    }
+private:
+    std::map<std::string, std::vector<OpcInfo>> m_mOpcodeTable;
+};
+
+class OpcodeProcessor : public Opcodes{
+public:
+    void registerOpcode(BYTE value,
+                        std::string family,
+                        opc_callback callback,
+                        unsigned short argv_count,
+                        unsigned short factical_arguments_count,
+                        eArgvType at_first = eArgvType::TUNK,
+                        eArgvType at_second = eArgvType::TUNK
+                        ){
         m_mCallbackTable[value] = stCallbackData(callback, argv_count);
+        registerOpcodeInfo((eOpcTable)value, family, argv_count, factical_arguments_count, at_first, at_second);
     }
     void process(PVOID code_section, int len){
         for(int i = 0; i < len; i++){
@@ -119,5 +227,7 @@ private:
 
     std::map<BYTE, stCallbackData> m_mCallbackTable;
 };
+
+OpcodeProcessor g_Machine;
 
 #endif // OPC_PROCESSOR_H

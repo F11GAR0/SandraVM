@@ -1,6 +1,8 @@
 #ifndef MAIN_H
 #define MAIN_H
 
+#define DEBUG
+
 #include <iostream>
 #include <vector>
 #include <list>
@@ -17,19 +19,10 @@ typedef void*   PVOID;
 #endif
 
 namespace BuildSanOne {
-enum eOpcTable{
-    MOV_REG_DWORD = 0x71,
-    MOV_REG_PDWORD,
-    MOV_DWORD_REG,
-    MOV_REG_REG,
-    PUSH,
-    POP,
-    JMP,
-    CALL,
-    ADD_REG_REG,
-    ADD_REG_DWORD,
-    CMP
-};
+
+
+
+
 }
 
 #include "memory.h"
