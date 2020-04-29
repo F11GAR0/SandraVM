@@ -66,7 +66,7 @@ namespace command_processor {
         while (true) {
             char* in = (char*)malloc(512);
             std::cin.getline(in, 512);
-#ifdef _DEBUG
+#ifdef DEBUG
             printf("\ncommand entered: %s\n", in);
 #endif
             if (strlen(in) > 0) {

@@ -21,11 +21,18 @@ class VMCodeArea{
 public:
     explicit VMCodeArea(std::vector<stInterpretEntity> lex_set){
         //TODO: Initializate variables and labels
+#ifdef DEBUG
+        for(int i = 0, len = lex_set.size(); i < len; i++){
+            lex_set[i].print_info();
+        }
+#endif
         std::pair<int, int> sections = findSectionIndexes(lex_set);
         loadVariables(lex_set, sections.first, sections.second);
-        std::cout<<"Variables found: "<<m_mVariables.size()<<std::endl;
         loadLabels(lex_set, sections.second, lex_set.size());
+#ifdef DEBUG
+        std::cout<<"Variables found: "<<m_mVariables.size()<<std::endl;
         std::cout<<"Labels found: "<<m_mLabels.size()<<std::endl;
+#endif
         clearLables(&lex_set);
         linkByteCode(lex_set, &m_pResultCode, &m_dwCodeLen, sections.second);
     }
@@ -69,7 +76,7 @@ private:
                     case eArgvType::TREG:
                         push_byte(&vdata, (BYTE)g_Registers.get_reg_id_by_name(ent.var1_name));
                         break;
-                    case eArgvType::TVAR: //its like pdword
+                    case eArgvType::TVAR:
                         push_dword(&vdata, m_mVariables[ent.var1_name]);
                         break;
                     }
@@ -82,7 +89,7 @@ private:
                         case eArgvType::TREG:
                             push_byte(&vdata, (BYTE)g_Registers.get_reg_id_by_name(ent.var2_name));
                             break;
-                        case eArgvType::TVAR: //its like pdword
+                        case eArgvType::TVAR:
                             push_dword(&vdata, m_mVariables[ent.var2_name]);
                             break;
                         }
@@ -171,7 +178,7 @@ public:
     }
     void loadCode(std::string code){
         m_sLoadedCode.clear();
-        VMCMessage::show("loading code.");
+        VMCMessage::show("loading code...");
         m_sLoadedCode += code;
     }
 
@@ -179,20 +186,33 @@ public:
         if(m_sLoadedCode.size() > 0){
             auto lines = split(m_sLoadedCode, '\n');
             std::vector<stInterpretEntity> lex_set;
-            VMCMessage::show("parsing.");
+            VMCMessage::show("parsing...");
             for(int i = 0, len = lines.size(); i < len; i++){
                 lex_set.push_back(g_Interpretator.interpret_line(lines[i]));
             }
-            VMCMessage::show("linking.");
+            VMCMessage::show("linking...");
             PBYTE out;
             DWORD out_len;
             VMCodeArea area(lex_set);
 
             area.getCode(&out, &out_len);
             peout->loadCode(out, out_len);
-
+#ifdef DEBUG
+            printf("code: \n");
+            for(int i = 0; i < out_len; i++){
+                printf("%X ", out[i]);
+            }
+            printf("\n");
+#endif
             area.getData(&out, &out_len);
             peout->loadData(out, out_len);
+#ifdef DEBUG
+            printf("data: \n");
+            for(int i = 0; i < out_len; i++){
+                printf("%X ", out[i]);
+            }
+            printf("\n");
+#endif
         }
     }
 

@@ -12,6 +12,41 @@ public:
         m_bMajorVMVer = SANDRA_MAJOR_VER;
         m_bMinorVMVer = SANDRA_MINOR_VER;
     }
+    explicit VMPE(const std::string& path){
+        FileReader reader;
+        reader.Open(path);
+
+        m_pVMSignature = (PBYTE)malloc(16);
+        for(int i = 0; i < 16; i++){
+            m_pVMSignature[i] = reader.ReadByte();
+        }
+
+        m_bMajorVMVer = reader.ReadByte();
+        m_bMinorVMVer = reader.ReadByte();
+
+        m_dwCodeSectionOffset = reader.ReadDword();
+        m_dwDataSectionOffset = reader.ReadDword();
+        m_dwCodeSectionSize = reader.ReadDword();
+        m_dwDataSectionSize = reader.ReadDword();
+
+        m_dwEntryPoint = reader.ReadDword();
+
+        reader.Skip(0x1000);
+
+        m_pCodeSection = (PBYTE)malloc(m_dwCodeSectionSize);
+        m_pDataSection = (PBYTE)malloc(m_dwDataSectionSize);
+
+        for(int i = 0; i < m_dwCodeSectionSize; i++){
+            BYTE bt = reader.ReadByte();
+            m_pCodeSection[i] = bt;
+        }
+
+        for(int i = 0; i < m_dwDataSectionSize; i++){
+            BYTE bt = reader.ReadByte();
+            m_pDataSection[i] = bt;
+        }
+        reader.Close();
+    }
     void loadCode(PBYTE code, unsigned int size){
         m_pCodeSection = (PBYTE)malloc(size);
         copyBytes(&m_pCodeSection, &code, size);
@@ -33,7 +68,7 @@ public:
     void getBuilded(PBYTE *out_pe, PDWORD out_len){
 
         m_dwCodeSectionOffset = 18 + sizeof(DWORD) * 5;
-        m_dwDataSectionOffset = m_dwCodeSectionSize + 0x1000 + m_dwCodeSectionSize;
+        m_dwDataSectionOffset = m_dwCodeSectionOffset + 0x1000 + m_dwCodeSectionSize;
         m_dwEntryPoint = 18 + sizeof(DWORD) * 5 + 0x1000;
 
         int p = 0;
@@ -84,8 +119,8 @@ private:
 
     PBYTE m_pVMSignature; //should occup 16 bytes
 
-    BYTE  m_bMinorVMVer;
     BYTE  m_bMajorVMVer;
+    BYTE  m_bMinorVMVer;
 
     DWORD m_dwCodeSectionOffset; //starting from m_pReserved
     DWORD m_dwDataSectionOffset;

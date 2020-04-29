@@ -13,6 +13,14 @@ public:
             free(iter.data);
         }
     }
+    //only for load
+    void MallocAtAddr(DWORD addr, DWORD size){
+        heap_entity ent;
+        ent.virtual_addr = addr;
+        ent.data = malloc(size);
+        ent.len = size;
+        add_heap(ent);
+    }
     DWORD Malloc(DWORD size){
         heap_entity ent;
         ent.virtual_addr = find_free_addr(size);
@@ -106,6 +114,11 @@ private:
     }
     void add_heap(heap_entity ent){
         m_lHeap.push_back(ent);
+        /*std::sort(m_lHeap.begin(), m_lHeap.end(), [](const heap_entity& first, const heap_entity& sec) -> int{
+            return first.virtual_addr > sec.virtual_addr;
+        });
+        */
+       // m_lHeap.sort();
     }
     void remove_heap(heap_entity ent){
         for(auto iter = m_lHeap.begin(); iter != m_lHeap.end(); *iter++){

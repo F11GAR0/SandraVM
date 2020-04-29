@@ -39,8 +39,8 @@ private:
 
 class FileReader {
 public:
-    void Open(std::string path, Mode mode = Mode::M_OPEN_WRITE_APPEND) {
-        m_ifBuffer.open(path, (std::ios_base::openmode)mode);
+    void Open(std::string path) {
+        m_ifBuffer.open(path, std::ios_base::binary);
     }
     void Close() {
         m_ifBuffer.close();
@@ -50,6 +50,25 @@ public:
         T ret;
         m_ifBuffer >> ret;
         return ret;
+    }
+    BYTE ReadByte(){
+        BYTE ret;
+        ret = m_ifBuffer.get();
+        //m_ifBuffer >> ret;
+        return ret;
+    }
+    DWORD ReadDword(){
+        //just >> not work so
+        PBYTE ret = (PBYTE)malloc(sizeof(DWORD));
+        for(int i = 0; i < sizeof(DWORD); i++)
+            ret[i] = ReadByte();
+        DWORD val = *(DWORD*)ret;
+        free(ret);
+        return val;
+    }
+    void Skip(unsigned int bytes){
+        for(int i = 0; i < bytes; i++)
+            ReadByte();
     }
     /// <param name = "outbuff"> Out buffer. </param>
     /// <param name = "length"> If length is -1, function will return all text from file. </param>

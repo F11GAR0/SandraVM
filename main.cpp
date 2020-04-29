@@ -40,11 +40,25 @@ void mov_reg_pdword(PVOID argvs){
     int p = 0;
     BYTE reg = ((BYTE*)argvs)[p++];
     //then we need to put value to register
-    DWORD pointer = (DWORD)argvs + p;
-    g_Registers[reg] = *(DWORD*)g_Memory.GetRealAddr(pointer);
+    DWORD pointer = *(DWORD*)((DWORD)argvs + p);
+    DWORD real_addr = g_Memory.GetRealAddr(pointer);
+    g_Registers[reg] = *(DWORD*)real_addr;
 
 #ifdef DEBUG
-    std::cout<<"mov_reg_dword( "<<(int)reg<<", "<<g_Registers[reg]<<" );"<<std::endl;
+    std::cout<<"mov_reg_pdword( "<<(int)reg<<", "<<g_Registers[reg]<<" );"<<std::endl;
+#endif
+}
+void mov_pdword_reg(PVOID argvs){
+    int p = 0;
+    //virtual pointer
+    DWORD pointer = *(DWORD*)((DWORD)argvs + p);
+    p += sizeof(DWORD);
+    BYTE reg = ((BYTE*)argvs)[p++];
+    //g_Memory.MemSet(pointer, sizeof(DWORD), (PVOID)&g_Registers[reg], sizeof(DWORD));
+    *(DWORD*)g_Memory.GetRealAddr(pointer) = g_Registers[reg];
+
+#ifdef DEBUG
+    std::cout<<"mov_pdword_reg( "<<g_Registers[reg]<<", "<<(int)reg<<" );"<<std::endl;
 #endif
 }
 void mov_reg_reg(PVOID argvs){
@@ -102,6 +116,7 @@ void out(PVOID argvs){
 void initMachine(){
     g_Machine.registerOpcode(eOpcTable::MOV_REG_DWORD, "mov", mov_reg_dword, 9, 2, eArgvType::TREG, eArgvType::TDWORD);
     g_Machine.registerOpcode(eOpcTable::MOV_REG_PDWORD, "mov", mov_reg_pdword, 9, 2, eArgvType::TREG, eArgvType::TPDWORD);
+    g_Machine.registerOpcode(eOpcTable::MOV_PDWORD_REG, "mov", mov_pdword_reg, 9, 2, eArgvType::TPDWORD, eArgvType::TREG);
     g_Machine.registerOpcode(eOpcTable::MOV_REG_REG, "mov", mov_reg_reg, 2, 2, eArgvType::TREG, eArgvType::TREG);
     g_Machine.registerOpcode(eOpcTable::PUSH, "push", push, 1, 1, eArgvType::TREG);
     g_Machine.registerOpcode(eOpcTable::POP, "pop", pop, 1, 1, eArgvType::TREG);
@@ -154,9 +169,36 @@ void compile(std::string){
         VMCMessage::show("creating file...");
         writer.Write(builded, len);
         writer.Close();
-        VMCMessage::show("file created");
+        VMCMessage::show("Succesfuly compiled.");
         std::cout<<"Outfile: "<<g_sDefaultFilePath<<" size: "<< len / 1024 << "kb"<< std::endl;
     }
+}
+
+void load(std::string in){
+    VMPE pe(g_sDefaultFilePath);
+    PBYTE data;
+    DWORD data_len;
+    pe.getData(&data, &data_len);
+#ifdef DEBUG
+            printf("data: \n");
+            for(int i = 0; i < data_len; i++){
+                printf("%X ", data[i]);
+            }
+            printf("\n");
+#endif
+    for(DWORD i = 0; i < data_len; i += sizeof(DWORD)){
+        g_Memory.MallocAtAddr(*(DWORD*)((DWORD)data + i), sizeof(DWORD));
+    }
+    free(data);
+    pe.getCode(&data, &data_len);
+#ifdef DEBUG
+            printf("code: \n");
+            for(int i = 0; i < data_len; i++){
+                printf("%X ", data[i]);
+            }
+            printf("\n");
+#endif
+    g_Machine.process(data, data_len);
 }
 
 int main(int argc, char *argv[])
@@ -171,6 +213,7 @@ int main(int argc, char *argv[])
     command_processor::register_command("stop_write", stop_write);
     command_processor::register_command("show_buffer", show_buffer);
     command_processor::register_command("compile", compile);
+    command_processor::register_command("load", load);
     command_processor::buffer_proc();
     std::cin.get();
     return app.exec();
@@ -180,6 +223,23 @@ int main(int argc, char *argv[])
     _global a
     _global b
 .code
+    mov sanax, a
+    mov sanbx, b
+    push sanax
+    mov sanax, sanbx
+    pop sanbx
+    out sanax
+    out sanbx
+*/
+/*
+.var
+    _global a
+    _global b
+.code
+    mov sanax, 12
+    mov a, sanax
+    mov sanax, 7
+    mov b, sanax
     mov sanax, a
     mov sanbx, b
     push sanax

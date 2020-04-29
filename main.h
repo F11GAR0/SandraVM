@@ -1,7 +1,7 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-#define DEBUG
+//#define DEBUG
 
 #define SANDRA_MINOR_VER 0
 #define SANDRA_MAJOR_VER 1
@@ -15,6 +15,7 @@
 #include <ostream>
 #include <vector>
 #include <list>
+#include <algorithm>
 //TODO: change it to custom map container
 #include <map>
 

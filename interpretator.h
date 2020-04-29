@@ -147,11 +147,11 @@ public:
                                         break;
                                     case eArgvType::TDWORD:
                                         ret.data = malloc(sizeof(DWORD) + INTERPRET_BUFF_RESERVE);
-                                        *(DWORD*)ret.data = std::stoi(argvs[0]);
+                                        *(DWORD*)ret.data = (DWORD)std::stoi(argvs[0]);
                                         break;
                                     case eArgvType::TPDWORD:
                                         ret.data = malloc(sizeof(DWORD) + INTERPRET_BUFF_RESERVE);
-                                        *(DWORD*)ret.data = std::stoi(erase_start_end(argvs[0]));
+                                        *(DWORD*)ret.data = (DWORD)std::stoi(erase_start_end(argvs[0]));
                                         break;
                                     case eArgvType::TVAR:
                                         ret.var1_name = argvs[0];
