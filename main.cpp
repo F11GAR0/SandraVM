@@ -1,6 +1,25 @@
 #include "main.h"
 #include <QCoreApplication>
 
+std::vector<std::string> split(std::string in, char separator) {
+    std::vector<std::string> ret;
+    std::string temp;
+    for (int i = 0, len = in.length(); i < len; i++) {
+        if (in[i] == separator) {
+            if (temp.length() != 0) {
+                ret.push_back(temp);
+                temp.clear();
+            }
+        }
+        else {
+            temp += in[i];
+        }
+    }
+    if (temp.length() > 0) {
+        ret.push_back(temp);
+    }
+    return ret;
+}
 
 
 namespace BuildSanOne{
@@ -76,6 +95,10 @@ void add_reg_dword(PVOID argvs){
 #endif
 }
 
+void out(PVOID argvs){
+    std::cout<<"reg: "<<g_Registers.get_reg_name_by_byte(((PBYTE)argvs)[0])<<" = "<<g_Registers[((PBYTE)argvs)[0]]<<std::endl;
+}
+
 void initMachine(){
     g_Machine.registerOpcode(eOpcTable::MOV_REG_DWORD, "mov", mov_reg_dword, 9, 2, eArgvType::TREG, eArgvType::TDWORD);
     g_Machine.registerOpcode(eOpcTable::MOV_REG_PDWORD, "mov", mov_reg_pdword, 9, 2, eArgvType::TREG, eArgvType::TPDWORD);
@@ -84,88 +107,71 @@ void initMachine(){
     g_Machine.registerOpcode(eOpcTable::POP, "pop", pop, 1, 1, eArgvType::TREG);
     g_Machine.registerOpcode(eOpcTable::ADD_REG_REG, "add", add_reg_reg, 2, 2, eArgvType::TREG, eArgvType::TREG);
     g_Machine.registerOpcode(eOpcTable::ADD_REG_DWORD, "add", add_reg_dword, 9, 2, eArgvType::TREG, eArgvType::TDWORD);
+    g_Machine.registerOpcode(eOpcTable::OUT, "out", out, 1, 1, eArgvType::TREG);
 }
 
+}
+
+bool g_bWriteAction = false;
+std::string g_sCode = "";
+void start_write(std::string){
+    g_bWriteAction = true;
+    std::cout<<"Write code here!"<<std::endl;
+}
+
+void stop_write(std::string){
+    g_bWriteAction = false;
+    std::cout<<"Write proc stoped."<<std::endl;
+}
+
+void show_buffer(std::string){
+    std::cout<<g_sCode;
+}
+
+void clear_buffer(std::string){
+    g_sCode.clear();
+}
+
+void buff_proc(std::string in){
+    if(g_bWriteAction){
+        g_sCode += in;
+        g_sCode += "\n";
+    }
+}
+
+std::string g_sDefaultFilePath;
+
+void compile(std::string){
+    if(g_sCode.size()){
+        g_VMCodeCompiler.loadCode(g_sCode);
+        VMPE pe;
+        g_VMCodeCompiler.compile(&pe);
+        FileWriter writer;
+        writer.Open(g_sDefaultFilePath, Mode::M_OPEN_WRITE);
+        PBYTE builded;
+        DWORD len;
+        pe.getBuilded(&builded, &len);
+        VMCMessage::show("creating file...");
+        writer.Write(builded, len);
+        writer.Close();
+        VMCMessage::show("file created");
+        std::cout<<"Outfile: "<<g_sDefaultFilePath<<" size: "<< len / 1024 << "kb"<< std::endl;
+    }
 }
 
 int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
     //test build
+    g_sDefaultFilePath = app.applicationDirPath().toStdString();
+    g_sDefaultFilePath += "/app.san";
     BuildSanOne::initMachine();
-
-    var<std::vector<BYTE>> code_sec;
-
-    //lets do simple value swap
-    const char *simple_code = ".var\n _global a\n.code\n mov sanax, a\n mov sanbx, a\n mov sanax, 12\npush sanax";
-
-    std::string temp_line;
-    for(int i = 0; i < strlen(simple_code); i++){
-        if(simple_code[i] != '\n') temp_line += simple_code[i];
-        else {
-#ifdef DEBUG
-            g_Interpretator.interpret_line(temp_line).print_info();
-#endif
-            temp_line.clear();
-        }
-    }
-    if(temp_line.length() > 0){
-#ifdef DEBUG
-            g_Interpretator.interpret_line(temp_line).print_info();
-#endif
-    }
-    code_sec.getValue().push_back(eOpcTable::MOV_REG_DWORD);
-    code_sec.getValue().push_back(eRegByte::SANAX);
-    code_sec.getValue().push_back(0x10); //SANAX = 10
-    code_sec.getValue().push_back(0x0);
-    code_sec.getValue().push_back(0x0);
-    code_sec.getValue().push_back(0x0);
-    code_sec.getValue().push_back(0x0);
-    code_sec.getValue().push_back(0x0);
-    code_sec.getValue().push_back(0x0);
-    code_sec.getValue().push_back(0x0);
-
-    code_sec.getValue().push_back(eOpcTable::MOV_REG_DWORD);
-    code_sec.getValue().push_back(eRegByte::SANBX);
-    code_sec.getValue().push_back(0x5); //SANBX = 5
-    code_sec.getValue().push_back(0x0);
-    code_sec.getValue().push_back(0x0);
-    code_sec.getValue().push_back(0x0);
-    code_sec.getValue().push_back(0x0);
-    code_sec.getValue().push_back(0x0);
-    code_sec.getValue().push_back(0x0);
-    code_sec.getValue().push_back(0x0);
-
-    code_sec.getValue().push_back(eOpcTable::PUSH);
-    code_sec.getValue().push_back(eRegByte::SANAX); //
-
-    code_sec.getValue().push_back(eOpcTable::MOV_REG_REG);
-    code_sec.getValue().push_back(eRegByte::SANAX);
-    code_sec.getValue().push_back(eRegByte::SANBX);
-
-    code_sec.getValue().push_back(eOpcTable::POP);
-    code_sec.getValue().push_back(eRegByte::SANBX); //
-
-    code_sec.getValue().push_back(eOpcTable::ADD_REG_DWORD);
-    code_sec.getValue().push_back(eRegByte::SANBX);
-    code_sec.getValue().push_back(0x7); //SANBX = 5
-    code_sec.getValue().push_back(0x0);
-    code_sec.getValue().push_back(0x0);
-    code_sec.getValue().push_back(0x0);
-    code_sec.getValue().push_back(0x0);
-    code_sec.getValue().push_back(0x0);
-    code_sec.getValue().push_back(0x0);
-    code_sec.getValue().push_back(0x0);
-
-    code_sec.getValue().push_back(eOpcTable::ADD_REG_REG);
-    code_sec.getValue().push_back(eRegByte::SANAX);
-    code_sec.getValue().push_back(eRegByte::SANBX);
-
-    g_Machine.process((PVOID)code_sec.getValue().data(), code_sec.getValue().size());
-
-    std::cout << "sanax: " << g_Registers.sanax << std::endl;
-    std::cout << "sanbx: " << g_Registers.sanbx << std::endl;
-
+    command_processor::register_buffer_line_hook(buff_proc);
+    command_processor::register_command("start_write", start_write);
+    command_processor::register_command("stop_write", stop_write);
+    command_processor::register_command("show_buffer", show_buffer);
+    command_processor::register_command("compile", compile);
+    command_processor::buffer_proc();
     std::cin.get();
     return app.exec();
 }

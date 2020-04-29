@@ -48,6 +48,36 @@ public:
         }
         return false;
     }
+    eRegByte get_reg_id_by_name(const std::string& reg_name){
+        if(reg_name == "sanax"){
+            return eRegByte::SANAX;
+        }
+        if(reg_name == "sanbx"){
+            return eRegByte::SANBX;
+        }
+        if(reg_name == "sancx"){
+            return eRegByte::SANCX;
+        }
+        if(reg_name == "sandx"){
+            return eRegByte::SANDX;
+        }
+        throw new std::exception();
+    }
+    std::string get_reg_name_by_byte(const BYTE& value){
+        eRegByte b = (eRegByte)value;
+        switch (b) {
+        case eRegByte::SANAX:
+            return "sanax";
+        case eRegByte::SANBX:
+            return "sanbx";
+        case eRegByte::SANCX:
+            return "sancx";
+        case eRegByte::SANDX:
+            return "sandx";
+        default:
+            return "unk";
+        }
+    }
     stVirtualRegisters(){
         sanax = 0;
         sanbx = 0;
@@ -75,7 +105,6 @@ private:
         }
         throw new std::exception();
     }
-
     DWORD& get_reg_by_byte_value(const BYTE& value){
         eRegByte b = (eRegByte)value;
         switch (b) {
@@ -90,22 +119,6 @@ private:
         default:
             throw new std::exception();
             break;
-        }
-    }
-
-    std::string get_reg_name_by_byte(const BYTE& value){
-        eRegByte b = (eRegByte)value;
-        switch (b) {
-        case eRegByte::SANAX:
-            return "sanax";
-        case eRegByte::SANBX:
-            return "sanbx";
-        case eRegByte::SANCX:
-            return "sancx";
-        case eRegByte::SANDX:
-            return "sandx";
-        default:
-            return "unk";
         }
     }
 
@@ -142,7 +155,8 @@ enum eOpcTable{
     RET,
     ADD_REG_REG,
     ADD_REG_DWORD,
-    CMP
+    CMP,
+    OUT
 };
 
 enum eArgvType{

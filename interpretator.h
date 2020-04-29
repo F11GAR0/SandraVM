@@ -28,8 +28,11 @@ struct stInterpretEntity{
      * mov sanax, a
      * -> var1_name = "a";
      */
+    unsigned short argvs_count;
     std::string var1_name;
+    eArgvType   var1_type;
     std::string var2_name;
+    eArgvType   var2_type;
     union{
         struct so{
             bool is_var_section : 1;
@@ -44,11 +47,14 @@ struct stInterpretEntity{
         data = nullptr;
         var1_name.clear();
         var2_name.clear();
+        var1_type = eArgvType::TUNK;
+        argvs_count = 0;
+        var2_type = eArgvType::TUNK;
         info.is_not_just_code = false;
     }
 #ifdef DEBUG
     void print_info(){
-        printf("opc: 0x%X Data: 0x%p Var1: %s Var2: %s\n", opc, data, var1_name.c_str(), var2_name.c_str());
+        printf("opc: 0x%X Data: 0x%p Argvs: %d Var1: %s Var2: %s Type of var1: %d Type of var2: %d\n", opc, data, argvs_count, var1_name.c_str(), var2_name.c_str(), var1_type, var2_type);
         printf("inf: is_var_sec: %d is_code_sec: %d is_label: %d is_var: %d\n", info._so.is_var_section, info._so.is_code_section, info._so.is_label, info._so.is_variable);
     }
 #endif
@@ -65,6 +71,7 @@ public:
         auto splitted = split(line, ' ');
         //first should be opcode or label or section
         std::string first = splitted[0];
+        if(first[0] == '\t') first = erase_start(first);
         if(first[0] == '.'){
             //section
             if(first == ".var"){
@@ -78,7 +85,8 @@ public:
         } else {
             if(first[0] == ':'){
                 //label
-                ret.var1_name = first.erase(0);
+                first.erase(0, 1);
+                ret.var1_name = first;
                 ret.info._so.is_label = true;
                 return ret;
             } else {
@@ -99,11 +107,13 @@ public:
                     //OpcInfo finded;
                     for(int i = 0; i < opc_info.size(); i++){
                         if(opc_info[i].factical_arguments_count == arguments_count){
+                            ret.argvs_count = arguments_count;
                             if(arguments_count == 1){
                                 if(opc_info[i].atype_first == type_is(argvs[0])){
                                     ret.opc = opc_info[i].opc;
                                     ret.info.is_not_just_code = false;
-                                    switch(type_is(argvs[0])){
+                                    ret.var1_type = type_is(argvs[0]);
+                                    switch(ret.var1_type){
                                     case eArgvType::TREG:
                                         ret.var1_name = argvs[0];
                                         break;
@@ -130,7 +140,8 @@ public:
                                 if(opc_info[i].atype_first == type_first && opc_info[i].atype_second == type_sec){
                                     ret.opc = opc_info[i].opc;
                                     ret.info.is_not_just_code = false;
-                                    switch(type_is(argvs[0])){
+                                    ret.var1_type = type_is(argvs[0]);
+                                    switch(ret.var1_type){
                                     case eArgvType::TREG:
                                         ret.var1_name = argvs[0];
                                         break;
@@ -146,9 +157,10 @@ public:
                                         ret.var1_name = argvs[0];
                                         break;
                                     }
-                                    switch(type_is(argvs[1])){
+                                    ret.var2_type = type_is(argvs[1]);
+                                    switch(ret.var2_type){
                                     case eArgvType::TREG:
-                                        ret.var2_name == argvs[1];
+                                        ret.var2_name = argvs[1];
                                         break;
                                     case eArgvType::TDWORD:
                                         if(!ret.data){
@@ -175,9 +187,9 @@ public:
                                 }
                             }
                         }
-                    }
-                }
-            }
+                    } //for
+                } //else var
+            } //else gloabal
         }
         return ret;
     }
@@ -200,6 +212,15 @@ private:
         }
         return ret;
     }
+
+    std::string erase_start(const std::string& in){
+        std::string ret;
+        for(int i = 1, len = in.length(); i < len; i++){
+            ret += in[i];
+        }
+        return ret;
+    }
+
     std::string remove_spaces(const std::string& in){
         std::string ret;
         for(int i = 0, len = in.length(); i < len; i++){
@@ -226,26 +247,6 @@ private:
         std::vector<std::string> ret;
         for(int i = from, to = (_to == -1 ? in.size() : _to); i < to; i++){
             ret.push_back(in[i]);
-        }
-        return ret;
-    }
-
-    std::vector<std::string> split(std::string in, char separator) {
-        std::vector<std::string> ret;
-        std::string temp;
-        for (int i = 0, len = in.length(); i < len; i++) {
-            if (in[i] == separator) {
-                if (temp.length() != 0) {
-                    ret.push_back(temp);
-                    temp.clear();
-                }
-            }
-            else {
-                temp += in[i];
-            }
-        }
-        if (temp.length() > 0) {
-            ret.push_back(temp);
         }
         return ret;
     }

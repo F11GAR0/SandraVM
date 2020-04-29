@@ -20,7 +20,15 @@ public:
         m_pDataSection = data;
         m_dwDataSectionSize = size;
     }
-    void getBuilded(PBYTE out_pe){
+    void getCode(PBYTE *out, PDWORD out_size){
+        *out = m_pCodeSection;
+        *out_size = m_dwCodeSectionSize;
+    }
+    void getData(PBYTE *out, PDWORD out_size){
+        *out = m_pDataSection;
+        *out_size = m_dwDataSectionSize;
+    }
+    void getBuilded(PBYTE *out_pe, PDWORD out_len){
 
         m_dwCodeSectionOffset = 18 + sizeof(DWORD) * 5;
         m_dwDataSectionOffset = m_dwCodeSectionSize + 0x1000 + m_dwCodeSectionSize;
@@ -28,6 +36,7 @@ public:
 
         int p = 0;
         const unsigned int out_size = 18 + sizeof(DWORD) * 5 + 0x1000 + m_dwCodeSectionSize + m_dwDataSectionSize;
+        *out_len = out_size;
         PBYTE ret = (PBYTE)malloc(out_size);
         for(int i = 0; i < 16; i++)
             *(BYTE*)((DWORD)ret + p++) = m_pVMSignature[i];
@@ -53,8 +62,9 @@ public:
         }
 
         //return
+        *out_pe = (PBYTE)malloc(out_size);
         for(int i = 0; i < out_size; i++){
-            out_pe[i] = ret[i];
+            (*out_pe)[i] = ret[i];
         }
     }
 private:

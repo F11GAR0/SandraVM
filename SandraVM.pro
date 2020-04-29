@@ -23,4 +23,6 @@ HEADERS += \
     opc_processor.h \
     interpretator.h \
     vmcode_compiler.h \
-    pe.h
+    pe.h \
+    command_processor.h \
+    file.h
