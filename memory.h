@@ -25,7 +25,7 @@ public:
         heap_entity ent;
         ent.virtual_addr = find_free_addr(size);
         if(ent.virtual_addr == -1){
-            return NULL;
+            return 0;
         } else {
             ent.data = malloc(size);
             ent.len = size;
@@ -154,11 +154,6 @@ public:
     }
     T* operator &(){
         return (T*)g_Memory.GetRealAddr(virtual_addr);
-    }
-    deref& operator *() const {
-        const deref drf = *(T*)g_Memory.GetRealAddr(virtual_addr);
-        auto a = *drf;
-        return *drf;
     }
     bool operator ==(const var& right){
         return g_Memory.MemCmp(right.virtual_addr, virtual_addr);

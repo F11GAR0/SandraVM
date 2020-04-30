@@ -56,7 +56,7 @@ namespace command_processor {
     }
 
     void buffer_proc() {
-        auto show_cmds = [](std::string in) {
+        auto show_cmds = [](std::string) {
             std::cout << "All registered commands:" << std::endl;
             for (int i = 0, size = cmds.size(); i < size; i++) {
                 std::cout << cmds[i].first << std::endl;

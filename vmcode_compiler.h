@@ -183,8 +183,6 @@ private:
     std::map<std::string, DWORD> m_mLabels; // "name", RVA (relative to the start of code area
     PBYTE m_pResultCode;
     DWORD m_dwCodeLen;
-    PBYTE m_pResultData;
-    DWORD m_dwDataLen;
 };
 
 class VMCodeCompiler{
