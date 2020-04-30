@@ -113,7 +113,8 @@ public:
                         if(opc_info[i].factical_arguments_count == arguments_count){
                             ret.argvs_count = arguments_count;
                             if(arguments_count == 1){
-                                if(opc_info[i].atype_first == type_is(argvs[0])){
+                                eArgvType type_first = type_is(argvs[0]) == eArgvType::TVAR ? eArgvType::TPDWORD : type_is(argvs[0]);
+                                if(opc_info[i].atype_first == type_first){
                                     ret.opc = opc_info[i].opc;
                                     ret.info.is_not_just_code = false;
                                     ret.var1_type = type_is(argvs[0]);
@@ -136,8 +137,8 @@ public:
                                         ret.var1_name = erase_start(argvs[0]);
                                         break;
                                     }
+                                    return ret;
                                 }
-                                return ret;
                             }
                             if(arguments_count == 2){
 
@@ -206,7 +207,7 @@ private:
         if(in[0] == '@') return eArgvType::TLABEL;
         if(is_reg_name(in)) return eArgvType::TREG;
         for(int i = 0, len = in.length(); i < len; i++){
-            if(!std::isdigit(in[i])){
+            if(!std::isdigit(in[i]) && in[i] != '-'){
                 return eArgvType::TVAR;
             }
         }

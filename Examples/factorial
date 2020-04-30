@@ -1,0 +1,14 @@
+.var
+    _global a
+.code
+    in a
+    mov sanax, a
+    inc sanax
+    mov sanbx, 1
+    mov sancx, 1
+    :factorial
+    mul sanbx, sancx
+    inc sancx
+    cmp sancx, sanax
+    je @factorial
+    out sanbx

@@ -27,6 +27,7 @@ public:
     DWORD sanbx;
     DWORD sancx;
     DWORD sandx;
+    DWORD sancmp;
     DWORD& operator[](const std::string& reg_name){
         return get_reg_by_name(reg_name);
     }
@@ -87,7 +88,6 @@ public:
         sanip = 0;
     }
 private:
-    DWORD sancmp;
     DWORD sanip;
 
     DWORD& get_reg_by_name(const std::string& reg_name){
@@ -151,12 +151,20 @@ enum eOpcTable{
     PUSH,
     POP,
     JMP_RVA,
+    JE_RVA,
     CALL,
     RET,
     ADD_REG_REG,
     ADD_REG_DWORD,
-    CMP,
-    OUT
+    CMP_REG_REG,
+    CMP_REG_DWORD,
+    INC,
+    DEC,
+    IN_REG = 0x10,
+    IN_PDWORD,
+    OUT,
+    MUL_REG_REG = 0x21,
+    MUL_REG_DWORD
 };
 
 enum eArgvType{

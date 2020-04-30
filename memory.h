@@ -33,6 +33,11 @@ public:
             return ent.virtual_addr;
         }
     }
+    void FreeAll(){
+        for(auto iter : m_lHeap){
+            free(iter.data);
+        }
+    }
     void Free(DWORD a_VirtualAddr){
         heap_entity ent;
         ent.virtual_addr = a_VirtualAddr;

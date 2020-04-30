@@ -101,7 +101,7 @@ void add_reg_reg(PVOID argvs){
 
 void add_reg_dword(PVOID argvs){
     BYTE dest = ((BYTE*)argvs)[0];
-    DWORD val = *(DWORD*)((DWORD)argvs + 1);;
+    DWORD val = *(DWORD*)((DWORD)argvs + 1);
     g_Registers[dest] += val;
 
 #ifdef DEBUG
@@ -110,7 +110,8 @@ void add_reg_dword(PVOID argvs){
 }
 
 void out(PVOID argvs){
-    std::cout<<"reg: "<<g_Registers.get_reg_name_by_byte(((PBYTE)argvs)[0])<<" = "<<g_Registers[((PBYTE)argvs)[0]]<<std::endl;
+    //std::cout<<"reg: "<<g_Registers.get_reg_name_by_byte(((PBYTE)argvs)[0])<<" = "<<(int)g_Registers[((PBYTE)argvs)[0]]<<std::endl;
+    std::cout<<(int)g_Registers[((PBYTE)argvs)[0]]<<std::endl;
 }
 
 void jmp_rva(PVOID argvs){
@@ -118,17 +119,86 @@ void jmp_rva(PVOID argvs){
     g_Machine.jump(rva);
 }
 
+void cmp_reg_reg(PVOID argvs){
+    BYTE reg1 = ((PBYTE)argvs)[0];
+    BYTE reg2 = ((PBYTE)argvs)[1];
+    if(g_Registers[reg1] == g_Registers[reg2]) g_Registers.sancmp = 0;
+    else
+    if(g_Registers[reg1] > g_Registers[reg2]) g_Registers.sancmp = 1;
+    else
+    if(g_Registers[reg1] < g_Registers[reg2]) g_Registers.sancmp = -1;
+}
+
+void cmp_reg_dword(PVOID argvs){
+    BYTE reg1 = ((PBYTE)argvs)[0];
+    DWORD val = *(DWORD*)((DWORD)argvs + 1);
+    if(g_Registers[reg1] == val) g_Registers.sancmp = 0;
+    else
+    if(g_Registers[reg1] > val) g_Registers.sancmp = 1;
+    else
+    if(g_Registers[reg1] < val) g_Registers.sancmp = -1;
+}
+
+void je_rva(PVOID argvs){
+    if(g_Registers.sancmp != 0){
+        DWORD rva = *(DWORD*)argvs;
+        g_Machine.jump(rva);
+    }
+}
+
+void inc(PVOID argvs){
+    BYTE reg = ((PBYTE)argvs)[0];
+    g_Registers[reg] += 1;
+}
+
+void dec(PVOID argvs){
+    BYTE reg = ((PBYTE)argvs)[0];
+    g_Registers[reg] -= 1;
+}
+
+void in_reg(PVOID argvs){
+    BYTE reg = ((PBYTE)argvs)[0];
+    std::cin >> g_Registers[reg];
+}
+
+void in_pdword(PVOID argvs){
+    DWORD pointer = *(DWORD*)argvs;
+    std::cin >> *(DWORD*)g_Memory.GetRealAddr(pointer);
+}
+
+void mul_reg_reg(PVOID argvs){
+    BYTE reg1 = ((PBYTE)argvs)[0];
+    BYTE reg2 = ((PBYTE)argvs)[1];
+    g_Registers[reg1] *= g_Registers[reg2];
+}
+
+void mul_reg_dword(PVOID argvs){
+    BYTE reg1 = ((PBYTE)argvs)[0];
+    DWORD val = *(DWORD*)((DWORD)argvs + 1);
+    g_Registers[reg1] *= val;
+}
+
 void initMachine(){
-    g_Machine.registerOpcode(eOpcTable::MOV_REG_DWORD, "mov", mov_reg_dword, 9, 2, eArgvType::TREG, eArgvType::TDWORD);
-    g_Machine.registerOpcode(eOpcTable::MOV_REG_PDWORD, "mov", mov_reg_pdword, 9, 2, eArgvType::TREG, eArgvType::TPDWORD);
-    g_Machine.registerOpcode(eOpcTable::MOV_PDWORD_REG, "mov", mov_pdword_reg, 9, 2, eArgvType::TPDWORD, eArgvType::TREG);
+    g_Machine.registerOpcode(eOpcTable::MOV_REG_DWORD, "mov", mov_reg_dword, 1 + sizeof(DWORD), 2, eArgvType::TREG, eArgvType::TDWORD);
+    g_Machine.registerOpcode(eOpcTable::MOV_REG_PDWORD, "mov", mov_reg_pdword, 1 + sizeof(DWORD), 2, eArgvType::TREG, eArgvType::TPDWORD);
+    g_Machine.registerOpcode(eOpcTable::MOV_PDWORD_REG, "mov", mov_pdword_reg, 1 + sizeof(DWORD), 2, eArgvType::TPDWORD, eArgvType::TREG);
     g_Machine.registerOpcode(eOpcTable::MOV_REG_REG, "mov", mov_reg_reg, 2, 2, eArgvType::TREG, eArgvType::TREG);
     g_Machine.registerOpcode(eOpcTable::PUSH, "push", push, 1, 1, eArgvType::TREG);
     g_Machine.registerOpcode(eOpcTable::POP, "pop", pop, 1, 1, eArgvType::TREG);
     g_Machine.registerOpcode(eOpcTable::ADD_REG_REG, "add", add_reg_reg, 2, 2, eArgvType::TREG, eArgvType::TREG);
-    g_Machine.registerOpcode(eOpcTable::ADD_REG_DWORD, "add", add_reg_dword, 9, 2, eArgvType::TREG, eArgvType::TDWORD);
+    g_Machine.registerOpcode(eOpcTable::ADD_REG_DWORD, "add", add_reg_dword, 1 + sizeof(DWORD), 2, eArgvType::TREG, eArgvType::TDWORD);
     g_Machine.registerOpcode(eOpcTable::OUT, "out", out, 1, 1, eArgvType::TREG);
     g_Machine.registerOpcode(eOpcTable::JMP_RVA, "jmp", jmp_rva, sizeof(DWORD), 1, eArgvType::TLABEL);
+    g_Machine.registerOpcode(eOpcTable::JE_RVA, "je", je_rva, sizeof(DWORD), 1, eArgvType::TLABEL);
+    g_Machine.registerOpcode(eOpcTable::CMP_REG_REG, "cmp", cmp_reg_reg, 2, 2, eArgvType::TREG, eArgvType::TREG);
+    g_Machine.registerOpcode(eOpcTable::CMP_REG_DWORD, "cmp", cmp_reg_dword, 1 + sizeof(DWORD), 2, eArgvType::TREG, eArgvType::TDWORD);
+    g_Machine.registerOpcode(eOpcTable::INC, "inc", inc, 1, 1, eArgvType::TREG);
+    g_Machine.registerOpcode(eOpcTable::DEC, "dec", dec, 1, 1, eArgvType::TREG);
+    g_Machine.registerOpcode(eOpcTable::IN_REG, "in", in_reg, 1, 1, eArgvType::TREG);
+    g_Machine.registerOpcode(eOpcTable::IN_PDWORD, "in", in_pdword, sizeof(DWORD), 1, eArgvType::TPDWORD);
+    g_Machine.registerOpcode(eOpcTable::MUL_REG_REG, "mul", mul_reg_reg, 2, 2, eArgvType::TREG, eArgvType::TREG);
+    g_Machine.registerOpcode(eOpcTable::MUL_REG_DWORD, "mul", mul_reg_dword, 1 + sizeof(DWORD), 2, eArgvType::TREG, eArgvType::TDWORD);
+
 }
 
 }
@@ -206,6 +276,8 @@ void load(std::string in){
             printf("\n");
 #endif
     g_Machine.process(data, data_len);
+    //code executed so lets free memory
+    g_Memory.FreeAll();
     }
     catch(std::exception &e){
         //
@@ -291,5 +363,35 @@ int main(int argc, char *argv[])
     add sanbx, 7
     :trueout
     out sanax
+    out sanbx
+*/
+/*
+.var
+    _global a
+.code
+    in a
+    mov sanbx, a
+    mov sanax, 0
+    :loop
+    out sanax
+    inc sanax
+    cmp sanax, sanbx
+    je @loop
+*/
+
+/*
+.var
+    _global a
+.code
+    in a
+    mov sanax, a
+    inc sanax
+    mov sanbx, 1
+    mov sancx, 1
+    :factorial
+    mul sanbx, sancx
+    inc sancx
+    cmp sancx, sanax
+    je @factorial
     out sanbx
 */

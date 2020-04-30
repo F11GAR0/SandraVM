@@ -1,0 +1,11 @@
+.var
+    _global a
+.code
+    in a
+    mov sanbx, a
+    mov sanax, 0
+    :loop
+    out sanax
+    inc sanax
+    cmp sanax, sanbx
+    je @loop
