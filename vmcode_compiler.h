@@ -50,6 +50,15 @@ public:
         *out_len = p;
     }
 private:
+    DWORD calcOffsetToLine(std::vector<stInterpretEntity> lex_set, unsigned int code_sect_start, unsigned int line){
+        DWORD RVA = 0;
+        for(int i = code_sect_start + 1, len = lex_set.size(); i < len; i++){
+            if(!lex_set[i].info.is_not_just_code){
+                RVA += g_Machine.getOpcArgvsBytes(lex_set[i].opc);
+            }
+        }
+        return RVA;
+    }
     void linkByteCode(std::vector<stInterpretEntity> lex_set, PBYTE *out, PDWORD code_len, unsigned int code_sect_start){
         std::vector<BYTE> vdata;
         auto push_dword = [](std::vector<BYTE> *v, DWORD in){
@@ -63,25 +72,11 @@ private:
         auto push_byte = [](std::vector<BYTE> *v, BYTE in){
             v->push_back(in);
         };
-        std::vector<DWORD> line_capacity;
-        auto get_offset_by_line = [](std::vector<DWORD> lc, int line) -> DWORD{
-            if(line > lc.size()){
-                VMCError::show(0, line, "unknown label.");
-                return 0;
-            }
-            DWORD ret = 0;
-            for(int i = 0; i < line; i++){
-                ret += lc[i];
-            }
-            return ret;
-        };
 
-        for(int i = code_sect_start + 1, len = lex_set.size(), line = 0; i < len; i++){
+        for(int i = code_sect_start + 1, len = lex_set.size(); i < len; i++){
             if(!lex_set[i].info.is_not_just_code){
                 stInterpretEntity ent = lex_set[i];
                 push_byte(&vdata, (BYTE)ent.opc);
-                line++;
-                line_capacity.push_back(g_Machine.getOpcArgvsBytes((BYTE)ent.opc));
                 if(ent.argvs_count >= 1){
                     switch(ent.var1_type){
                     case eArgvType::TDWORD:
@@ -95,7 +90,7 @@ private:
                         push_dword(&vdata, m_mVariables[ent.var1_name]);
                         break;
                     case eArgvType::TLABEL:
-                        push_dword(&vdata, get_offset_by_line(line_capacity,m_mLabels[ent.var1_name]));
+                        push_dword(&vdata, calcOffsetToLine(lex_set, code_sect_start, m_mLabels[ent.var1_name]));
                         break;
                     }
                     if(ent.argvs_count > 1){

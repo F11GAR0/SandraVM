@@ -264,3 +264,22 @@ int main(int argc, char *argv[])
     out sanax
     jmp @loop
 */
+
+/*
+.var
+    _global a
+    _global b
+.code
+    mov sanax, 12
+    mov a, sanax
+    mov sanbx, 7
+    mov b, sanbx
+    jmp @out
+    add sanax, 4
+    add sanbx, 2
+    mov a, sanax
+    mov b, sanbx
+    :out
+    out sanax
+    out sanbx
+*/
