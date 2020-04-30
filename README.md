@@ -4,7 +4,8 @@ Not completed now.
 ![Image alt](https://github.com/F11GAR0/SandraVM/blob/master/view.png)
 ____
 
-[:arrow_up:syntax example](#syntax example)
+#Syntax example
+
 *.var
     _global a
     _global b
