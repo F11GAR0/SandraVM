@@ -50,14 +50,14 @@ public:
         *out_len = p;
     }
 private:
-    DWORD calcOffsetToLine(std::vector<stInterpretEntity> lex_set, unsigned int code_sect_start, unsigned int line){
+    DWORD calcOffsetToLine(const std::vector<stInterpretEntity>& lex_set, const unsigned int& code_sect_start, unsigned int line){
         DWORD RVA = 0;
-        for(int i = code_sect_start + 1, len = lex_set.size(); i < len; i++){
+        for(int i = code_sect_start + 1; i < line + code_sect_start + 1; i++){
             if(!lex_set[i].info.is_not_just_code){
-                RVA += g_Machine.getOpcArgvsBytes(lex_set[i].opc);
+                RVA += g_Machine.getOpcArgvsBytes(lex_set[i].opc) + 1;
             }
         }
-        return RVA;
+        return RVA; //not to the end of opc but to the next opcode!
     }
     void linkByteCode(std::vector<stInterpretEntity> lex_set, PBYTE *out, PDWORD code_len, unsigned int code_sect_start){
         std::vector<BYTE> vdata;
@@ -136,7 +136,7 @@ private:
     }
     void loadLabels(std::vector<stInterpretEntity> lex_set, unsigned int start_code_sect, unsigned int end_code_sect){
         int labels = 0;
-        for(int i = start_code_sect, line = 0; i < end_code_sect; i++, line++){
+        for(int i = start_code_sect + 1, line = 0; i < end_code_sect; i++, line++){
             if(lex_set[i].info._so.is_label){
                 if(m_mLabels.find(lex_set[i].var1_name) != m_mLabels.end()){
                     std::string mess = "multiplie definition of '";

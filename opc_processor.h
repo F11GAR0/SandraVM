@@ -238,7 +238,7 @@ public:
                 if(!m_bNeedJump)
                     i += m_mCallbackTable[opc].argv_count - 1;
                 else {
-                    i = m_dwJumpRVA;
+                    i = m_dwJumpRVA - 1; //++ in end of cycle
                     m_bNeedJump = false;
                 }
             }
