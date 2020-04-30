@@ -72,6 +72,10 @@ public:
         //first should be opcode or label or section
         std::string first = splitted[0];
         if(first[0] == '\t') first = erase_start(first);
+        if(first[0] == '#'){
+            //commentary
+            //TODO: complete this
+        }
         if(first[0] == '.'){
             //section
             if(first == ".var"){
@@ -197,7 +201,7 @@ public:
         return ret;
     }
 private:
-    eArgvType type_is(std::string in){
+    eArgvType type_is(const std::string& in){
         if(in[0] == '[' && in[in.length() - 1] == ']') return eArgvType::TPDWORD;
         if(in[0] == '@') return eArgvType::TLABEL;
         if(is_reg_name(in)) return eArgvType::TREG;

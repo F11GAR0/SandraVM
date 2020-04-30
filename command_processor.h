@@ -18,17 +18,17 @@ namespace command_processor {
         just_buff_callbacks.push_back(callback);
     }
 
-    std::string remove_first(std::string in) {
+    std::string remove_first(const std::string& in) {
         std::string ret;
-        for (int i = 1; i < in.length(); i++) {
+        for (int i = 1, len = in.length(); i < len; i++) {
             ret += in[i];
         }
         return ret;
     }
 
-    std::string compress(std::vector<std::string> in) {
+    std::string compress(const std::vector<std::string>& in) {
         std::string ret;
-        for (int i = 0; i < in.size(); i++) {
+        for (int i = 0, len = in.size(); i < len; i++) {
             ret += in[i];
             ret += " ";
         }

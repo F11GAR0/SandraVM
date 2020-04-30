@@ -192,7 +192,7 @@ public:
     explicit VMCodeCompiler(){
         m_sLoadedCode.clear();
     }
-    void loadCode(std::string code){
+    void loadCode(const std::string& code){
         m_sLoadedCode.clear();
         VMCMessage::show("loading code...");
         m_sLoadedCode += code;
