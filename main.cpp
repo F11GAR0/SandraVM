@@ -113,6 +113,11 @@ void out(PVOID argvs){
     std::cout<<"reg: "<<g_Registers.get_reg_name_by_byte(((PBYTE)argvs)[0])<<" = "<<g_Registers[((PBYTE)argvs)[0]]<<std::endl;
 }
 
+void jmp_rva(PVOID argvs){
+    DWORD rva = *(DWORD*)argvs;
+    g_Machine.jump(rva);
+}
+
 void initMachine(){
     g_Machine.registerOpcode(eOpcTable::MOV_REG_DWORD, "mov", mov_reg_dword, 9, 2, eArgvType::TREG, eArgvType::TDWORD);
     g_Machine.registerOpcode(eOpcTable::MOV_REG_PDWORD, "mov", mov_reg_pdword, 9, 2, eArgvType::TREG, eArgvType::TPDWORD);
@@ -123,6 +128,7 @@ void initMachine(){
     g_Machine.registerOpcode(eOpcTable::ADD_REG_REG, "add", add_reg_reg, 2, 2, eArgvType::TREG, eArgvType::TREG);
     g_Machine.registerOpcode(eOpcTable::ADD_REG_DWORD, "add", add_reg_dword, 9, 2, eArgvType::TREG, eArgvType::TDWORD);
     g_Machine.registerOpcode(eOpcTable::OUT, "out", out, 1, 1, eArgvType::TREG);
+    g_Machine.registerOpcode(eOpcTable::JMP_RVA, "jmp", jmp_rva, sizeof(DWORD), 1, eArgvType::TLABEL);
 }
 
 }
@@ -247,4 +253,14 @@ int main(int argc, char *argv[])
     pop sanbx
     out sanax
     out sanbx
+*/
+/*
+.var
+    _global a
+.code
+    mov sanax, 12
+    mov a, sanax
+    :loop
+    out sanax
+    jmp @loop
 */

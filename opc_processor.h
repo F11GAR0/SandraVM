@@ -150,7 +150,7 @@ enum eOpcTable{
     MOV_REG_REG,
     PUSH,
     POP,
-    JMP,
+    JMP_RVA,
     CALL,
     RET,
     ADD_REG_REG,
@@ -164,7 +164,8 @@ enum eArgvType{
     TVAR,
     TREG,
     TDWORD,
-    TPDWORD
+    TPDWORD,
+    TLABEL
 };
 
 struct OpcInfo{
@@ -225,20 +226,34 @@ public:
         m_mCallbackTable[value] = stCallbackData(callback, argv_count);
         registerOpcodeInfo((eOpcTable)value, family, argv_count, factical_arguments_count, at_first, at_second);
     }
+    DWORD getOpcArgvsBytes(BYTE opc){
+        return m_mCallbackTable[opc].argv_count;
+    }
+
     void process(PVOID code_section, int len){
         for(int i = 0; i < len; i++){
             BYTE opc = ((BYTE*)code_section)[i];
             if(m_mCallbackTable.find(opc) != m_mCallbackTable.end()){
                 m_mCallbackTable[opc].cb((PVOID*)((DWORD)code_section + ++i));
-                i += m_mCallbackTable[opc].argv_count - 1;
+                if(!m_bNeedJump)
+                    i += m_mCallbackTable[opc].argv_count - 1;
+                else {
+                    i = m_dwJumpRVA;
+                    m_bNeedJump = false;
+                }
             }
         }
+    }
+    void jump(DWORD rva){
+        m_bNeedJump = true;
+        m_dwJumpRVA = rva;
     }
     OpcodeProcessor() {}
 private:
     OpcodeProcessor( const OpcodeProcessor& ) = delete;
     void operator=( const OpcodeProcessor& ) = delete;
-
+    bool m_bNeedJump;
+    DWORD m_dwJumpRVA;
     std::map<BYTE, stCallbackData> m_mCallbackTable;
 };
 

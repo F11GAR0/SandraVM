@@ -128,6 +128,9 @@ public:
                                     case eArgvType::TVAR:
                                         ret.var1_name = argvs[0];
                                         break;
+                                    case eArgvType::TLABEL:
+                                        ret.var1_name = erase_start(argvs[0]);
+                                        break;
                                     }
                                 }
                                 return ret;
@@ -196,6 +199,7 @@ public:
 private:
     eArgvType type_is(std::string in){
         if(in[0] == '[' && in[in.length() - 1] == ']') return eArgvType::TPDWORD;
+        if(in[0] == '@') return eArgvType::TLABEL;
         if(is_reg_name(in)) return eArgvType::TREG;
         for(int i = 0, len = in.length(); i < len; i++){
             if(!std::isdigit(in[i])){

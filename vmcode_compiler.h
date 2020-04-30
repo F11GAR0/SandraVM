@@ -63,10 +63,25 @@ private:
         auto push_byte = [](std::vector<BYTE> *v, BYTE in){
             v->push_back(in);
         };
-        for(int i = code_sect_start + 1, len = lex_set.size(); i < len; i++){
+        std::vector<DWORD> line_capacity;
+        auto get_offset_by_line = [](std::vector<DWORD> lc, int line) -> DWORD{
+            if(line > lc.size()){
+                VMCError::show(0, line, "unknown label.");
+                return 0;
+            }
+            DWORD ret = 0;
+            for(int i = 0; i < line; i++){
+                ret += lc[i];
+            }
+            return ret;
+        };
+
+        for(int i = code_sect_start + 1, len = lex_set.size(), line = 0; i < len; i++){
             if(!lex_set[i].info.is_not_just_code){
                 stInterpretEntity ent = lex_set[i];
                 push_byte(&vdata, (BYTE)ent.opc);
+                line++;
+                line_capacity.push_back(g_Machine.getOpcArgvsBytes((BYTE)ent.opc));
                 if(ent.argvs_count >= 1){
                     switch(ent.var1_type){
                     case eArgvType::TDWORD:
@@ -78,6 +93,9 @@ private:
                         break;
                     case eArgvType::TVAR:
                         push_dword(&vdata, m_mVariables[ent.var1_name]);
+                        break;
+                    case eArgvType::TLABEL:
+                        push_dword(&vdata, get_offset_by_line(line_capacity,m_mLabels[ent.var1_name]));
                         break;
                     }
                     if(ent.argvs_count > 1){
@@ -122,7 +140,8 @@ private:
         }
     }
     void loadLabels(std::vector<stInterpretEntity> lex_set, unsigned int start_code_sect, unsigned int end_code_sect){
-        for(int i = start_code_sect; i < end_code_sect; i++){
+        int labels = 0;
+        for(int i = start_code_sect, line = 0; i < end_code_sect; i++, line++){
             if(lex_set[i].info._so.is_label){
                 if(m_mLabels.find(lex_set[i].var1_name) != m_mLabels.end()){
                     std::string mess = "multiplie definition of '";
@@ -131,7 +150,9 @@ private:
                     VMCError::show(0, i, mess);
                     continue;
                 }
-                m_mLabels[lex_set[i].var1_name] = i;
+                //lex_set[i].var1_name.erase(0,1);
+                m_mLabels[lex_set[i].var1_name] = line - labels;
+                labels++;
             }
         }
     }
