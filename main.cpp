@@ -181,6 +181,7 @@ void compile(std::string){
 }
 
 void load(std::string in){
+    try{
     VMPE pe(g_sDefaultFilePath);
     PBYTE data;
     DWORD data_len;
@@ -205,6 +206,10 @@ void load(std::string in){
             printf("\n");
 #endif
     g_Machine.process(data, data_len);
+    }
+    catch(std::exception &e){
+        //
+    }
 }
 
 int main(int argc, char *argv[])
@@ -214,6 +219,7 @@ int main(int argc, char *argv[])
     g_sDefaultFilePath = app.applicationDirPath().toStdString();
     g_sDefaultFilePath += "/app.san";
     BuildSanOne::initMachine();
+    ConsoleColor::logo();
     command_processor::register_buffer_line_hook(buff_proc);
     command_processor::register_command("start_write", start_write);
     command_processor::register_command("stop_write", stop_write);
@@ -280,6 +286,10 @@ int main(int argc, char *argv[])
     mov a, sanax
     mov b, sanbx
     :out
+    jmp @trueout
+    add sanax, 1
+    add sanbx, 7
+    :trueout
     out sanax
     out sanbx
 */

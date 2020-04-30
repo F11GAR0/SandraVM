@@ -6,14 +6,14 @@
 class VMCError{
 public:
     static void show(int offset, int line,std::string message){
-        std::cout<<"[SANDRA]: Error at ["<<offset<<";"<<line<<"]: "<<message<<std::endl;
+        std::cout<<ConsoleColor::RED<<"[SANDRA]: "<<ConsoleColor::RED<<"Error at ["<<offset<<";"<<line<<"]: "<<message<<std::endl;
     }
 };
 
 class VMCMessage{
 public:
     static void show(std::string message){
-        std::cout<<"[SANDRA]: "<<message<<std::endl;
+        std::cout<<ConsoleColor::BLUE<<"[SANDRA]: "<<ConsoleColor::NC<<message<<std::endl;
     }
 };
 

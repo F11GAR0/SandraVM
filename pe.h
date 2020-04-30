@@ -19,6 +19,11 @@ public:
         m_pVMSignature = (PBYTE)malloc(16);
         for(int i = 0; i < 16; i++){
             m_pVMSignature[i] = reader.ReadByte();
+            if(m_pVMSignature[i] != SANDRA_SIGNATURE[i]){
+                std::cout<<"Cant open file, its not SandraVM file"<<std::endl;
+                throw new std::exception();
+                return;
+            }
         }
 
         m_bMajorVMVer = reader.ReadByte();
