@@ -6,7 +6,7 @@ ____
 
 #Syntax example
 
-*.var
+.var
     _global a
     _global b
 .code
@@ -25,4 +25,4 @@ ____
     add sanbx, 7
     :trueout
     out sanax
-    out sanbx (italic)*
+    out sanbx
