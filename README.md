@@ -6,6 +6,7 @@ ____
 
 #Syntax example
 
+```asm
 .var
     _global a
     _global b
@@ -26,3 +27,4 @@ ____
     :trueout
     out sanax
     out sanbx
+```
