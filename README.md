@@ -4,7 +4,7 @@ Not completed now.
 ![Image alt](https://github.com/F11GAR0/SandraVM/blob/master/view.png)
 ____
 
-#Syntax example
+# Syntax example
 
 ```asm
 .var
