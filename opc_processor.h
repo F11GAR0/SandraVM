@@ -23,6 +23,7 @@ enum eRegByte{
 
 struct stVirtualRegisters{
 public:
+    //TODO: make reg for math operations
     DWORD sanax;
     DWORD sanbx;
     DWORD sancx;
@@ -164,7 +165,8 @@ enum eOpcTable{
     IN_PDWORD,
     OUT,
     MUL_REG_REG = 0x21,
-    MUL_REG_DWORD
+    MUL_REG_DWORD,
+    //TODO: DIV, CALL
 };
 
 enum eArgvType{
