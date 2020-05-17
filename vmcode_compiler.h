@@ -145,6 +145,10 @@ private:
                     VMCError::show(0, i, mess);
                     continue;
                 }
+                if(i == lex_set.size() - 1){
+                    VMCError::show(0, i, "Label in the end of file!");
+                    continue;
+                }
                 //lex_set[i].var1_name.erase(0,1);
                 m_mLabels[lex_set[i].var1_name] = line - labels;
                 labels++;

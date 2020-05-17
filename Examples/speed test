@@ -1,0 +1,9 @@
+.var
+.code
+    mov sanax, 0
+    ts
+    :loop
+    add sanax, 1
+    cmp sanax, 65535
+    je @loop
+    ts

@@ -1,0 +1,18 @@
+.var
+    _global a
+    _global b
+.code
+    in a
+    in b
+    mov sanax, a
+    mov sanbx, b
+    call @summ
+    out sancx
+    jmp @end
+    :summ
+    mov sancx, 0
+    add sancx, sanax
+    add sancx, sanbx
+    ret
+    :end
+    nop

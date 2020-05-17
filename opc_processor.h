@@ -145,6 +145,8 @@ struct stCallbackData{
 
 enum eOpcTable{
     NULL_RESERVED = 0x0,
+    NOP,
+    TS,
     MOV_REG_DWORD = 0x71,
     MOV_REG_PDWORD,
     MOV_PDWORD_REG,
@@ -153,7 +155,7 @@ enum eOpcTable{
     POP,
     JMP_RVA,
     JE_RVA,
-    CALL,
+    CALL_LABEL,
     RET,
     ADD_REG_REG,
     ADD_REG_DWORD,
@@ -244,6 +246,7 @@ public:
         for(int i = 0; i < len; i++){
             BYTE opc = ((BYTE*)code_section)[i];
             if(m_mCallbackTable.find(opc) != m_mCallbackTable.end()){
+                m_dwCurrentRVA = i;
                 m_mCallbackTable[opc].cb((PVOID*)((DWORD)code_section + ++i));
                 if(!m_bNeedJump)
                     i += m_mCallbackTable[opc].argv_count - 1;
@@ -258,12 +261,16 @@ public:
         m_bNeedJump = true;
         m_dwJumpRVA = rva;
     }
+    int getCurrentPointerAddr(){
+        return m_dwCurrentRVA;
+    }
     OpcodeProcessor() {}
 private:
     OpcodeProcessor( const OpcodeProcessor& ) = delete;
     void operator=( const OpcodeProcessor& ) = delete;
     bool m_bNeedJump;
     DWORD m_dwJumpRVA;
+    DWORD m_dwCurrentRVA;
     std::map<BYTE, stCallbackData> m_mCallbackTable;
 };
 

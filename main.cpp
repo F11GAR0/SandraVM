@@ -178,6 +178,25 @@ void mul_reg_dword(PVOID argvs){
     g_Registers[reg1] *= val;
 }
 
+void call_label(PVOID argvs){
+    g_Stack.push(g_Machine.getCurrentPointerAddr() + sizeof(DWORD) + 1);
+    DWORD rva = *(DWORD*)argvs;
+    g_Machine.jump(rva);
+}
+
+void ret(PVOID argvs){
+    DWORD ret_rva = g_Stack.pop();
+    g_Machine.jump(ret_rva);
+}
+
+void nop(PVOID argvs){
+
+}
+
+void ts(PVOID argvs){
+    std::cout << "Current ts: " << clock() / (double)CLOCKS_PER_SEC << " sec" << std::endl;
+}
+
 void initMachine(){
     g_Machine.registerOpcode(eOpcTable::MOV_REG_DWORD, "mov", mov_reg_dword, 1 + sizeof(DWORD), 2, eArgvType::TREG, eArgvType::TDWORD);
     g_Machine.registerOpcode(eOpcTable::MOV_REG_PDWORD, "mov", mov_reg_pdword, 1 + sizeof(DWORD), 2, eArgvType::TREG, eArgvType::TPDWORD);
@@ -198,10 +217,14 @@ void initMachine(){
     g_Machine.registerOpcode(eOpcTable::IN_PDWORD, "in", in_pdword, sizeof(DWORD), 1, eArgvType::TPDWORD);
     g_Machine.registerOpcode(eOpcTable::MUL_REG_REG, "mul", mul_reg_reg, 2, 2, eArgvType::TREG, eArgvType::TREG);
     g_Machine.registerOpcode(eOpcTable::MUL_REG_DWORD, "mul", mul_reg_dword, 1 + sizeof(DWORD), 2, eArgvType::TREG, eArgvType::TDWORD);
-
+    g_Machine.registerOpcode(eOpcTable::CALL_LABEL, "call", call_label, sizeof(DWORD), 1, eArgvType::TLABEL);
+    g_Machine.registerOpcode(eOpcTable::RET, "ret", ret, 0, 0);
+    g_Machine.registerOpcode(eOpcTable::NOP, "nop", nop, 0, 0);
+    g_Machine.registerOpcode(eOpcTable::TS, "ts", ts, 0, 0);
+}
 }
 
-}
+
 
 bool g_bWriteAction = false;
 std::string g_sCode = "";
@@ -307,91 +330,30 @@ int main(int argc, char *argv[])
     _global a
     _global b
 .code
+    in a
+    in b
     mov sanax, a
     mov sanbx, b
-    push sanax
-    mov sanax, sanbx
-    pop sanbx
-    out sanax
-    out sanbx
-*/
-/*
-.var
-    _global a
-    _global b
-.code
-    mov sanax, 12
-    mov a, sanax
-    mov sanax, 7
-    mov b, sanax
-    mov sanax, a
-    mov sanbx, b
-    push sanax
-    mov sanax, sanbx
-    pop sanbx
-    out sanax
-    out sanbx
-*/
-/*
-.var
-    _global a
-.code
-    mov sanax, 12
-    mov a, sanax
-    :loop
-    out sanax
-    jmp @loop
+    call @summ
+    out sancx
+    jmp @end
+    :summ
+    mov sancx, 0
+    add sancx, sanax
+    add sancx, sanbx
+    ret
+    :end
+    nop
 */
 
 /*
 .var
-    _global a
-    _global b
 .code
-    mov sanax, 12
-    mov a, sanax
-    mov sanbx, 7
-    mov b, sanbx
-    jmp @out
-    add sanax, 4
-    add sanbx, 2
-    mov a, sanax
-    mov b, sanbx
-    :out
-    jmp @trueout
-    add sanax, 1
-    add sanbx, 7
-    :trueout
-    out sanax
-    out sanbx
-*/
-/*
-.var
-    _global a
-.code
-    in a
-    mov sanbx, a
     mov sanax, 0
+    ts
     :loop
-    out sanax
-    inc sanax
-    cmp sanax, sanbx
+    add sanax, 1
+    cmp sanax, 65535
     je @loop
-*/
-
-/*
-.var
-    _global a
-.code
-    in a
-    mov sanax, a
-    inc sanax
-    mov sanbx, 1
-    mov sancx, 1
-    :factorial
-    mul sanbx, sancx
-    inc sancx
-    cmp sancx, sanax
-    je @factorial
-    out sanbx
+    ts
 */

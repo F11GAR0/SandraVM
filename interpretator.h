@@ -112,6 +112,13 @@ public:
                     for(int i = 0; i < opc_info.size(); i++){
                         if(opc_info[i].factical_arguments_count == arguments_count){
                             ret.argvs_count = arguments_count;
+
+                            if(arguments_count == 0){
+                                ret.opc = opc_info[i].opc;
+                                ret.info.is_not_just_code = false;
+                                return ret;
+                            }
+
                             if(arguments_count == 1){
                                 eArgvType type_first = type_is(argvs[0]) == eArgvType::TVAR ? eArgvType::TPDWORD : type_is(argvs[0]);
                                 if(opc_info[i].atype_first == type_first){
