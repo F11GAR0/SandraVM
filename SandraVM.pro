@@ -1,5 +1,10 @@
 QT -= gui
 
+QMAKE_CXXFLAGS_RELEASE -= -O2
+QMAKE_CXXFLAGS_RELEASE += -O3
+
+QMAKE_LFLAGS_RELEASE -= -O1
+
 CONFIG += c++11 console
 CONFIG -= app_bundle
 
