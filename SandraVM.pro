@@ -26,8 +26,8 @@ HEADERS += \
     main.h \
     stack.h \
     opc_processor.h \
-    interpretator.h \
     vmcode_compiler.h \
     pe.h \
     command_processor.h \
-    file.h
+    file.h \
+    parser.h

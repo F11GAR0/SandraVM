@@ -76,7 +76,7 @@ void logo(){
 #include "memory.h"
 #include "stack.h"
 #include "opc_processor.h"
-#include "interpretator.h"
+#include "parser.h"
 #include "pe.h"
 #include "vmcode_compiler.h"
 #include "command_processor.h"
